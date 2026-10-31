@@ -210,6 +210,17 @@
                                 Height="34" VerticalAlignment="Bottom" Click="CopyOtherLayer_Click" />
                     </Grid>
 
+                    <Border Margin="0,12,0,0" Padding="12,10"
+                            Background="#302B20" BorderBrush="#806B36" BorderThickness="1" CornerRadius="7">
+                        <StackPanel>
+                            <CheckBox x:Name="IdentifySelectedKeyboardCheckBox"
+                                      Content="{localization:Loc Editor_IdentifySelectedKeyboard.Content, Fallback=Identify the selected keyboard for this key}" />
+                            <TextBlock Text="{localization:Loc Editor_IdentifySelectedKeyboardHint.Text, Fallback=Requires a selected keyboard. Wait up to 10 ms and block only that device.}"
+                                       Margin="0,5,0,0" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
                     <Border Height="1" Background="#414141" Margin="0,20,0,18" />
                     </StackPanel>
 

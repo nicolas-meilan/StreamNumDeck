@@ -84,6 +84,9 @@
   <data name="Settings_CaptureOnStartup.Header" xml:space="preserve">
     <value>Enable key capture on startup</value>
   </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Show microphone mute indicator</value>
+  </data>
   <data name="Capture_NumPad" xml:space="preserve">
     <value>NumPad</value>
   </data>
@@ -92,6 +95,33 @@
   </data>
   <data name="Capture_NumPadHint" xml:space="preserve">
     <value>Intercept NumPad keys</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Keyboard source</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>All keyboards (global capture)</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Captured keys are blocked globally by default. Per key, enable device identification to wait up to 10 ms and block only the selected keyboard. Other keyboards and timeouts pass through.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Disconnected keyboard: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Reconnect the selected keyboard or choose All keyboards before saving.</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Could not enumerate keyboard devices</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Keyboard capture failed</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Could not read input from the selected keyboard.</value>
   </data>
   <data name="Capture_NavigationBlockHint" xml:space="preserve">
     <value>Intercept the Insert, Home, Page Up, Delete, End, and Page Down keys</value>
@@ -122,6 +152,45 @@
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
     <value>The physical NumLock key switches between two assignment layers.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identify a keyboard key</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Start the diagnostic, then press keypad Back and regular Backspace. Hook, Raw Input, and the final hook correlation result are shown separately. Keys pass through while active.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Start diagnostic</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticEntry" xml:space="preserve">
+    <value>VK 0x{0:X2} · Scan 0x{1:X2} · Extended: {2}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>selected</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>other</value>
+  </data>
+  <data name="Settings_DeviceCorrelationEntry" xml:space="preserve">
+    <value>Hook correlation [{0}] · VK 0x{1:X2} · Scan 0x{2:X2}</value>
+  </data>
+  <data name="Settings_DeviceCorrelationBlocked" xml:space="preserve">
+    <value>matched selected device — blocked</value>
+  </data>
+  <data name="Settings_DeviceCorrelationPassed" xml:space="preserve">
+    <value>no match — passed through</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>yes</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>no</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>OBS Studio</value>
@@ -200,6 +269,12 @@
   </data>
   <data name="Editor_CopyOtherLayer.Content" xml:space="preserve">
     <value>Copy assignment from the other layer</value>
+  </data>
+  <data name="Editor_IdentifySelectedKeyboard.Content" xml:space="preserve">
+    <value>Identify the selected keyboard for this key</value>
+  </data>
+  <data name="Editor_IdentifySelectedKeyboardHint.Text" xml:space="preserve">
+    <value>Requires a selected keyboard. When enabled, waits up to 10 ms. Only that keyboard is blocked; other keyboards or a timeout pass through. Closely timed identical keys can be misidentified.</value>
   </data>
   <data name="Editor_ActionSection.Text" xml:space="preserve">
     <value>Action</value>

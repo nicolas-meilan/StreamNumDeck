@@ -554,7 +554,10 @@ public partial class KeyEditorWindow : Window
 
     private void Remove_Click(object sender, RoutedEventArgs e)
     {
-        Assignment = new KeyAssignment(string.Empty, IconReference.BuiltIn("square"), new NoActionDefinition());
+        Assignment = new KeyAssignment(string.Empty, IconReference.BuiltIn("square"), new NoActionDefinition())
+        {
+            IdentifySelectedKeyboardBeforeBlocking = IdentifySelectedKeyboardCheckBox.IsChecked == true,
+        };
         DialogResult = true;
     }
 
@@ -573,7 +576,11 @@ public partial class KeyEditorWindow : Window
             Assignment = new KeyAssignment(
                 actionOnlyMode ? string.Empty : LabelTextBox.Text,
                 actionOnlyMode ? IconReference.BuiltIn("blank") : selectedIcon,
-                CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))));
+                CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))))
+            {
+                IdentifySelectedKeyboardBeforeBlocking =
+                    !actionOnlyMode && IdentifySelectedKeyboardCheckBox.IsChecked == true,
+            };
             DialogResult = true;
         }
         catch (Exception exception)
@@ -632,6 +639,7 @@ public partial class KeyEditorWindow : Window
     {
         LabelTextBox.Text = assignment.Label;
         ShowIcon(assignment.Icon);
+        IdentifySelectedKeyboardCheckBox.IsChecked = assignment.IdentifySelectedKeyboardBeforeBlocking;
 
         automationSteps.Clear();
         if (assignment.Action is AutomationActionDefinition automation)

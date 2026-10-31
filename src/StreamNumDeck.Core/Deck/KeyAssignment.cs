@@ -38,6 +38,8 @@ public sealed record KeyAssignment
 
     public ActionDefinition Action { get; }
 
+    public bool IdentifySelectedKeyboardBeforeBlocking { get; init; }
+
     public static KeyAssignment Empty { get; } = new(
         string.Empty,
         IconReference.BuiltIn("square"),

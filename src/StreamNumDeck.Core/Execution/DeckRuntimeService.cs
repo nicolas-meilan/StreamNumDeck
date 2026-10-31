@@ -37,6 +37,30 @@ public sealed class DeckRuntimeService(
         remove => keyboardCapture.NumLockStateChanged -= value;
     }
 
+    public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved
+    {
+        add => keyboardCapture.KeyboardInputObserved += value;
+        remove => keyboardCapture.KeyboardInputObserved -= value;
+    }
+
+    public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved
+    {
+        add => keyboardCapture.RawKeyboardInputObserved += value;
+        remove => keyboardCapture.RawKeyboardInputObserved -= value;
+    }
+
+    public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
+    {
+        add => keyboardCapture.KeyboardDeviceCorrelationObserved += value;
+        remove => keyboardCapture.KeyboardDeviceCorrelationObserved -= value;
+    }
+
+    public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError
+    {
+        add => keyboardCapture.CaptureError += value;
+        remove => keyboardCapture.CaptureError -= value;
+    }
+
     public event EventHandler<ActionExecutionFailedEventArgs>? ActionExecutionFailed;
 
     public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default) =>
@@ -46,6 +70,26 @@ public sealed class DeckRuntimeService(
         KeyboardCaptureTargets targets,
         CancellationToken cancellationToken = default) =>
         keyboardCapture.SetCaptureTargetsAsync(targets, cancellationToken);
+
+    public Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
+        CancellationToken cancellationToken = default) =>
+        keyboardCapture.GetAvailableKeyboardsAsync(cancellationToken);
+
+    public Task SetSelectedKeyboardDeviceAsync(
+        string? deviceId,
+        CancellationToken cancellationToken = default) =>
+        keyboardCapture.SetSelectedKeyboardDeviceAsync(deviceId, cancellationToken);
+
+    public Task SetDeviceIdentificationKeysAsync(
+        IReadOnlyCollection<DeckKey> numLockOffKeys,
+        IReadOnlyCollection<DeckKey> numLockOnKeys,
+        CancellationToken cancellationToken = default) =>
+        keyboardCapture.SetDeviceIdentificationKeysAsync(numLockOffKeys, numLockOnKeys, cancellationToken);
+
+    public Task SetKeyboardDiagnosticModeAsync(
+        bool isEnabled,
+        CancellationToken cancellationToken = default) =>
+        keyboardCapture.SetKeyboardDiagnosticModeAsync(isEnabled, cancellationToken);
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {

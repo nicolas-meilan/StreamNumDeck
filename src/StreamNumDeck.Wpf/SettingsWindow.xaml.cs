@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using StreamNumDeck.Core.Input;
 using StreamNumDeck.Core.Settings;
 using StreamNumDeck.Wpf.Services;
 using StreamNumDeck.Wpf.ViewModels;
@@ -17,12 +19,18 @@ public partial class SettingsWindow : Window
     private readonly MainViewModel viewModel;
     private readonly bool focusVTubeStudio;
     private GlobalSettings? originalSettings;
+    private volatile bool keyboardDiagnosticActive;
+    private IReadOnlyList<KeyboardDeviceInfo> availableKeyboards = [];
 
     public SettingsWindow(MainViewModel viewModel, bool focusVTubeStudio = false)
     {
         this.viewModel = viewModel;
         this.focusVTubeStudio = focusVTubeStudio;
         InitializeComponent();
+        this.viewModel.KeyboardInputObserved += ViewModel_KeyboardInputObserved;
+        this.viewModel.RawKeyboardInputObserved += ViewModel_RawKeyboardInputObserved;
+        this.viewModel.KeyboardDeviceCorrelationObserved += ViewModel_KeyboardDeviceCorrelationObserved;
+        Closed += Window_Closed;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -54,8 +62,10 @@ public partial class SettingsWindow : Window
             StartWithWindowsCheckBox.IsChecked = snapshot.Settings.StartWithWindows;
             MinimizeToTrayCheckBox.IsChecked = snapshot.Settings.MinimizeToTray;
             CaptureOnStartupCheckBox.IsChecked = snapshot.Settings.EnableCaptureOnStartup;
+            ShowMuteOverlayCheckBox.IsChecked = snapshot.Settings.ShowMuteOverlay;
             CaptureNumpadCheckBox.IsChecked = snapshot.Settings.CaptureNumpad;
             CaptureNavigationBlockCheckBox.IsChecked = snapshot.Settings.CaptureNavigationBlock;
+            await RefreshKeyboardDeviceListAsync(snapshot.Settings.SelectedKeyboardDeviceId);
             ObsHostTextBox.Text = snapshot.Settings.Obs.Host;
             ObsPortTextBox.Text = snapshot.Settings.Obs.Port.ToString();
             VTubeStudioHostTextBox.Text = snapshot.Settings.VTubeStudio.Host;
@@ -109,6 +119,18 @@ public partial class SettingsWindow : Window
                 throw new FormatException($"{AppStrings.Get("Settings_VTubeStudioPort.Header", "Port")}: 1–65535");
             }
 
+            var selectedKeyboardDeviceId = KeyboardDeviceComboBox.SelectedValue as string;
+            if (selectedKeyboardDeviceId is { Length: > 0 }
+                && !availableKeyboards.Any(device => string.Equals(
+                    device.DeviceId,
+                    selectedKeyboardDeviceId,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new FormatException(AppStrings.Get(
+                    "KeyboardDevice_Disconnected.Error",
+                    "Reconnect the selected keyboard or choose All keyboards before saving."));
+            }
+
             var settings = new GlobalSettings(
                 AudioDeviceComboBox.SelectedValue as string,
                 checked((int)Math.Round(MasterVolumeSlider.Value)),
@@ -122,6 +144,10 @@ public partial class SettingsWindow : Window
             {
                 CaptureNumpad = CaptureNumpadCheckBox.IsChecked == true,
                 CaptureNavigationBlock = CaptureNavigationBlockCheckBox.IsChecked == true,
+                SelectedKeyboardDeviceId = string.IsNullOrWhiteSpace(selectedKeyboardDeviceId)
+                    ? null
+                    : selectedKeyboardDeviceId,
+                ShowMuteOverlay = ShowMuteOverlayCheckBox.IsChecked == true,
                 VTubeStudio = new VTubeStudioConnectionSettings(
                     VTubeStudioHostTextBox.Text,
                     vTubeStudioPort,
@@ -133,6 +159,7 @@ public partial class SettingsWindow : Window
 
             try
             {
+                await StopKeyboardDiagnosticAsync();
                 await viewModel.SaveSettingsAsync(settings, ObsPasswordBox.Password);
             }
             catch
@@ -149,7 +176,7 @@ public partial class SettingsWindow : Window
                 throw;
             }
 
-            ((App)System.Windows.Application.Current).ApplySettings(settings);
+            await ((App)System.Windows.Application.Current).ApplySettingsAsync(settings);
             DialogResult = true;
         }
         catch (Exception exception)
@@ -158,6 +185,208 @@ public partial class SettingsWindow : Window
             SaveButton.IsEnabled = true;
         }
     }
+
+    private async void RefreshKeyboardDevices_Click(object sender, RoutedEventArgs e) =>
+        await RefreshKeyboardDeviceListAsync(KeyboardDeviceComboBox.SelectedValue as string);
+
+    private async Task RefreshKeyboardDeviceListAsync(string? selectedDeviceId)
+    {
+        availableKeyboards = [];
+        try
+        {
+            availableKeyboards = await viewModel.GetAvailableKeyboardsAsync();
+            var options = new List<KeyboardDeviceOption>
+            {
+                new(
+                    string.Empty,
+                    AppStrings.Get("KeyboardDevice_All.Label", "All keyboards (global capture)")),
+            };
+            options.AddRange(availableKeyboards.Select(device =>
+                new KeyboardDeviceOption(device.DeviceId, device.DisplayName)));
+
+            if (selectedDeviceId is { Length: > 0 } disconnectedDeviceId
+                && !availableKeyboards.Any(device => string.Equals(
+                    device.DeviceId,
+                    disconnectedDeviceId,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                options.Add(new KeyboardDeviceOption(
+                    disconnectedDeviceId,
+                    AppStrings.Format(
+                        "KeyboardDevice_Disconnected.Label",
+                        disconnectedDeviceId.Length > 48
+                            ? disconnectedDeviceId.Substring(0, 48)
+                            : disconnectedDeviceId)));
+            }
+
+            KeyboardDeviceComboBox.ItemsSource = options;
+            KeyboardDeviceComboBox.SelectedValue = selectedDeviceId ?? string.Empty;
+        }
+        catch (Exception exception)
+        {
+            ShowErrorStatus(
+                "KeyboardDevice_EnumerationFailed",
+                "Could not enumerate keyboard devices",
+                exception);
+        }
+    }
+
+    private async void StartKeyboardDiagnostic_Click(object sender, RoutedEventArgs e)
+    {
+        StartKeyboardDiagnosticButton.IsEnabled = false;
+        try
+        {
+            KeyboardScanCodeDiagnosticOutput.Clear();
+            await viewModel.StartKeyboardDiagnosticAsync();
+            keyboardDiagnosticActive = true;
+            StopKeyboardDiagnosticButton.IsEnabled = true;
+        }
+        catch (Exception exception)
+        {
+            StartKeyboardDiagnosticButton.IsEnabled = true;
+            ShowErrorStatus("Error_StartKeyboardDiagnostic", "Could not start keyboard diagnostic", exception);
+        }
+    }
+
+    private async void StopKeyboardDiagnostic_Click(object sender, RoutedEventArgs e) =>
+        await StopKeyboardDiagnosticAsync();
+
+    private async Task StopKeyboardDiagnosticAsync()
+    {
+        if (!keyboardDiagnosticActive)
+        {
+            return;
+        }
+
+        keyboardDiagnosticActive = false;
+        try
+        {
+            await viewModel.StopKeyboardDiagnosticAsync();
+        }
+        finally
+        {
+            StartKeyboardDiagnosticButton.IsEnabled = true;
+            StopKeyboardDiagnosticButton.IsEnabled = false;
+        }
+    }
+
+    private void ViewModel_KeyboardInputObserved(object? sender, KeyboardInputObservedEventArgs e)
+    {
+        if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!keyboardDiagnosticActive)
+            {
+                return;
+            }
+
+            var extended = AppStrings.Get(
+                e.IsExtended ? "Settings_ScanCodeExtended.Yes" : "Settings_ScanCodeExtended.No",
+                e.IsExtended ? "yes" : "no");
+            var entry = AppStrings.Format(
+                "Settings_ScanCodeDiagnosticEntry",
+                e.VirtualKeyCode,
+                e.ScanCode,
+                extended);
+            AppendKeyboardDiagnosticEntry(entry);
+        }));
+    }
+
+    private void ViewModel_RawKeyboardInputObserved(object? sender, RawKeyboardInputObservedEventArgs e)
+    {
+        if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!keyboardDiagnosticActive)
+            {
+                return;
+            }
+
+            var extended = AppStrings.Get(
+                e.IsExtended ? "Settings_ScanCodeExtended.Yes" : "Settings_ScanCodeExtended.No",
+                e.IsExtended ? "yes" : "no");
+            var device = AppStrings.Get(
+                e.IsSelectedDevice
+                    ? "Settings_RawInputDiagnosticSelected"
+                    : "Settings_RawInputDiagnosticOther",
+                e.IsSelectedDevice ? "selected" : "other");
+            var entry = AppStrings.Format(
+                "Settings_RawInputDiagnosticEntry",
+                device,
+                e.VirtualKeyCode,
+                e.ScanCode,
+                extended);
+            AppendKeyboardDiagnosticEntry(entry);
+        }));
+    }
+
+    private void ViewModel_KeyboardDeviceCorrelationObserved(
+        object? sender,
+        KeyboardDeviceCorrelationObservedEventArgs e)
+    {
+        if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!keyboardDiagnosticActive)
+            {
+                return;
+            }
+
+            var result = string.Equals(
+                e.MatchedDeviceId,
+                e.SelectedDeviceId,
+                StringComparison.OrdinalIgnoreCase)
+                ? AppStrings.Get("Settings_DeviceCorrelationBlocked", "matched selected device — blocked")
+                : AppStrings.Get("Settings_DeviceCorrelationPassed", "no match — passed through");
+            var entry = AppStrings.Format(
+                "Settings_DeviceCorrelationEntry",
+                result,
+                e.VirtualKeyCode,
+                e.ScanCode);
+            AppendKeyboardDiagnosticEntry(entry);
+        }));
+    }
+
+    private void AppendKeyboardDiagnosticEntry(string entry)
+    {
+        var lines = KeyboardScanCodeDiagnosticOutput.Text
+            .Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
+        var firstLine = Math.Max(0, lines.Length - 7);
+        KeyboardScanCodeDiagnosticOutput.Text = string.Join(
+            Environment.NewLine,
+            lines.Skip(firstLine).Append(entry));
+        KeyboardScanCodeDiagnosticOutput.ScrollToEnd();
+    }
+
+    private async void Window_Closed(object? sender, EventArgs e)
+    {
+        viewModel.KeyboardInputObserved -= ViewModel_KeyboardInputObserved;
+        viewModel.RawKeyboardInputObserved -= ViewModel_RawKeyboardInputObserved;
+        viewModel.KeyboardDeviceCorrelationObserved -= ViewModel_KeyboardDeviceCorrelationObserved;
+        try
+        {
+            await StopKeyboardDiagnosticAsync();
+        }
+
+        catch (Exception exception)
+        {
+            AppLogger.Error("Stop keyboard diagnostic", exception);
+        }
+    }
+
+    private sealed record KeyboardDeviceOption(string DeviceId, string DisplayName);
 
     private async void TestObs_Click(object sender, RoutedEventArgs e)
     {

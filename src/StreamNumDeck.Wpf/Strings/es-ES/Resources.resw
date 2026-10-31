@@ -84,6 +84,9 @@
   <data name="Settings_CaptureOnStartup.Header" xml:space="preserve">
     <value>Habilitar captura al inicio</value>
   </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Mostrar indicador de micrófono silenciado</value>
+  </data>
   <data name="Capture_NumPad" xml:space="preserve">
     <value>Teclado numérico</value>
   </data>
@@ -92,6 +95,33 @@
   </data>
   <data name="Capture_NumPadHint" xml:space="preserve">
     <value>Interceptar teclas del teclado numérico</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Teclado de origen</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Todos los teclados (captura global)</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Por defecto, las teclas capturadas se bloquean globalmente. En cada tecla puedes activar la identificación del dispositivo: espera hasta 10 ms y bloquea solo si viene del teclado seleccionado. Las demás teclas y los tiempos agotados pasan normalmente.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Teclado desconectado: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Reconecta el teclado seleccionado o elige Todos los teclados antes de guardar.</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>No se pudieron enumerar los teclados</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Error al capturar el teclado</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>No se pudo leer la entrada del teclado seleccionado.</value>
   </data>
   <data name="Capture_NavigationBlockHint" xml:space="preserve">
     <value>Intercepta las teclas Insertar, Inicio, Re Pág, Eliminar, Fin y Av Pág</value>
@@ -122,6 +152,45 @@
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
     <value>La tecla física NumLock cambia entre dos capas de asignación.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identificar una tecla</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Inicia el diagnóstico y pulsa Back del numpad y Retroceso normal. Se muestran por separado el hook, Raw Input y el resultado final de correlación. Mientras esté activo, las teclas pasan a Windows.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Iniciar diagnóstico</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticEntry" xml:space="preserve">
+    <value>VK 0x{0:X2} · Scan 0x{1:X2} · Extendido: {2}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extendido: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>seleccionado</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>otro</value>
+  </data>
+  <data name="Settings_DeviceCorrelationEntry" xml:space="preserve">
+    <value>Correlación del hook [{0}] · VK 0x{1:X2} · Scan 0x{2:X2}</value>
+  </data>
+  <data name="Settings_DeviceCorrelationBlocked" xml:space="preserve">
+    <value>coincide con el dispositivo seleccionado — bloqueada</value>
+  </data>
+  <data name="Settings_DeviceCorrelationPassed" xml:space="preserve">
+    <value>sin coincidencia — pasó a Windows</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>sí</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>no</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>Estudio OBS</value>
@@ -200,6 +269,12 @@
   </data>
   <data name="Editor_CopyOtherLayer.Content" xml:space="preserve">
     <value>Copiar la tarea de la otra capa</value>
+  </data>
+  <data name="Editor_IdentifySelectedKeyboard.Content" xml:space="preserve">
+    <value>Identificar el teclado seleccionado para esta tecla</value>
+  </data>
+  <data name="Editor_IdentifySelectedKeyboardHint.Text" xml:space="preserve">
+    <value>Requiere seleccionar un teclado. Al activarlo, espera hasta 10 ms. Solo se bloquean las teclas de ese teclado; otros teclados o si vence el tiempo pasan normalmente. Pulsaciones muy cercanas de la misma tecla pueden atribuirse al dispositivo equivocado.</value>
   </data>
   <data name="Editor_ActionSection.Text" xml:space="preserve">
     <value>acción</value>

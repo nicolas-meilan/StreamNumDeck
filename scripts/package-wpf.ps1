@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')]
-    [string] $Version = '1.3.0',
+    [string] $Version = '2.0.0',
 
     [switch] $SkipInstaller
 )
@@ -15,8 +15,10 @@ $license = Join-Path $repositoryRoot 'LICENSE.md'
 $thirdPartyNotices = Join-Path $repositoryRoot 'THIRD-PARTY-NOTICES.md'
 $artifactsRoot = Join-Path $repositoryRoot 'artifacts'
 $releaseRoot = Join-Path $artifactsRoot 'release'
-$stagingRoot = Join-Path $artifactsRoot ".package-wpf-$PID"
+$stagingRoot = Join-Path $artifactsRoot ".package-wpf-$([Guid]::NewGuid().ToString('N'))"
 $portableRoot = Join-Path $stagingRoot 'StreamNumDeck'
+$stagedZipPath = Join-Path $stagingRoot "StreamNumDeck-$Version-portable.zip"
+$stagedSetupPath = Join-Path $stagingRoot "StreamNumDeck-$Version-Setup.exe"
 $zipPath = Join-Path $releaseRoot "StreamNumDeck-$Version-portable.zip"
 $setupPath = Join-Path $releaseRoot "StreamNumDeck-$Version-Setup.exe"
 
@@ -56,22 +58,12 @@ $numericVersion = ($Version -split '-', 2)[0]
 $fileVersion = "$numericVersion.0"
 $dotnet = Find-DotNet
 
-Get-Process StreamNumDeck -ErrorAction SilentlyContinue | Stop-Process -Force
-
-if (Test-Path -LiteralPath $releaseRoot) {
-    Remove-Item -LiteralPath $releaseRoot -Recurse -Force
-}
-if (Test-Path -LiteralPath $stagingRoot) {
-    Remove-Item -LiteralPath $stagingRoot -Recurse -Force
-}
-
 New-Item -ItemType Directory -Path $portableRoot -Force | Out-Null
 New-Item -ItemType Directory -Path $releaseRoot -Force | Out-Null
 
 try {
     & $dotnet publish $project `
         --configuration Release `
-        --no-restore `
         --output $portableRoot `
         -p:Version=$Version `
         -p:AssemblyVersion=$fileVersion `
@@ -101,7 +93,7 @@ try {
 
     Compress-Archive `
         -LiteralPath $portableRoot `
-        -DestinationPath $zipPath `
+        -DestinationPath $stagedZipPath `
         -CompressionLevel Optimal
 
     if (-not $SkipInstaller) {
@@ -114,11 +106,26 @@ try {
             "/DMyAppVersion=$Version" `
             "/DMyFileVersion=$fileVersion" `
             "/DMySourceDir=$portableRoot" `
-            "/DMyOutputDir=$releaseRoot" `
+            "/DMyOutputDir=$stagingRoot" `
             (Join-Path $repositoryRoot 'installer\StreamNumDeck.Wpf.iss')
         if ($LASTEXITCODE -ne 0) {
             throw 'Installer build failed.'
         }
+    }
+
+    if (-not (Test-Path -LiteralPath $stagedZipPath)) {
+        throw "Expected portable archive was not created: $stagedZipPath"
+    }
+
+    if (-not $SkipInstaller) {
+        if (-not (Test-Path -LiteralPath $stagedSetupPath)) {
+            throw "Expected installer was not created: $stagedSetupPath"
+        }
+    }
+
+    Move-Item -LiteralPath $stagedZipPath -Destination $zipPath -Force
+    if (-not $SkipInstaller) {
+        Move-Item -LiteralPath $stagedSetupPath -Destination $setupPath -Force
     }
 
     $artifacts = @($zipPath)

@@ -89,6 +89,65 @@ public sealed class DeckRuntimeServiceTests
         }
     }
 
+    [TestMethod]
+    public async Task KeyboardInputObserved_IsForwardedFromCaptureService()
+    {
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(AppConfiguration.CreateDefault()));
+        var capture = new TestKeyboardCaptureService();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(Array.Empty<IActionExecutor>()));
+        KeyboardInputObservedEventArgs? observed = null;
+        runtime.KeyboardInputObserved += (_, args) => observed = args;
+
+        capture.PublishObservedInput(0x0D, 0x1C, isExtended: true);
+
+        Assert.IsNotNull(observed);
+        Assert.AreEqual(0x0Du, observed.VirtualKeyCode);
+        Assert.AreEqual(0x1Cu, observed.ScanCode);
+        Assert.IsTrue(observed.IsExtended);
+        await runtime.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task SetSelectedKeyboardDevice_IsForwardedToCaptureService()
+    {
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(AppConfiguration.CreateDefault()));
+        var capture = new TestKeyboardCaptureService();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(Array.Empty<IActionExecutor>()));
+
+        await runtime.SetSelectedKeyboardDeviceAsync(@"\\?\HID#Keyboard#Device");
+
+        Assert.AreEqual(@"\\?\HID#Keyboard#Device", capture.SelectedKeyboardDeviceId);
+        await runtime.DisposeAsync();
+    }
+
+    [TestMethod]
+    public async Task SetDeviceIdentificationKeys_IsForwardedToCaptureService()
+    {
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(AppConfiguration.CreateDefault()));
+        var capture = new TestKeyboardCaptureService();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(Array.Empty<IActionExecutor>()));
+
+        await runtime.SetDeviceIdentificationKeysAsync(
+            [DeckKey.NumpadBack],
+            [DeckKey.Insert]);
+
+        CollectionAssert.AreEqual(new[] { DeckKey.NumpadBack }, capture.DeviceIdentificationKeysOff.ToArray());
+        CollectionAssert.AreEqual(new[] { DeckKey.Insert }, capture.DeviceIdentificationKeysOn.ToArray());
+        await runtime.DisposeAsync();
+    }
+
     private static async Task WaitWithTimeoutAsync(Task task)
     {
         if (await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(3))) != task)
@@ -185,9 +244,35 @@ public sealed class DeckRuntimeServiceTests
 
         public KeyboardCaptureTargets CaptureTargets { get; private set; } = KeyboardCaptureTargets.All;
 
+        public string? SelectedKeyboardDeviceId { get; private set; }
+
+        public IReadOnlyCollection<DeckKey> DeviceIdentificationKeysOff { get; private set; } = [];
+
+        public IReadOnlyCollection<DeckKey> DeviceIdentificationKeysOn { get; private set; } = [];
+
         public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
         public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
+
+        public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved;
+
+        public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError
+        {
+            add { }
+            remove { }
+        }
 
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
@@ -211,6 +296,33 @@ public sealed class DeckRuntimeServiceTests
             return Task.CompletedTask;
         }
 
+        public Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<KeyboardDeviceInfo>>([]);
+
+        public Task SetSelectedKeyboardDeviceAsync(
+            string? deviceId,
+            CancellationToken cancellationToken = default)
+        {
+            SelectedKeyboardDeviceId = deviceId;
+            return Task.CompletedTask;
+        }
+
+        public Task SetDeviceIdentificationKeysAsync(
+            IReadOnlyCollection<DeckKey> numLockOffKeys,
+            IReadOnlyCollection<DeckKey> numLockOnKeys,
+            CancellationToken cancellationToken = default)
+        {
+            DeviceIdentificationKeysOff = numLockOffKeys.ToArray();
+            DeviceIdentificationKeysOn = numLockOnKeys.ToArray();
+            return Task.CompletedTask;
+        }
+
+        public Task SetKeyboardDiagnosticModeAsync(
+            bool isEnabled,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
         public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default)
         {
             NumLockStateChanged?.Invoke(this, new NumLockStateChangedEventArgs(isOn));
@@ -224,6 +336,11 @@ public sealed class DeckRuntimeServiceTests
 
         public void Publish(DeckKey key) => channel.Writer.TryWrite(
             new CapturedKeyPress(key, NumLockLayer.Off, DateTimeOffset.UtcNow));
+
+        public void PublishObservedInput(uint virtualKeyCode, uint scanCode, bool isExtended) =>
+            KeyboardInputObserved?.Invoke(
+                this,
+                new KeyboardInputObservedEventArgs(virtualKeyCode, scanCode, isExtended));
     }
 
     private sealed class InMemoryConfigurationStore(AppConfiguration configuration) : IConfigurationStore

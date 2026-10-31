@@ -1,3 +1,5 @@
+using StreamNumDeck.Core.Deck;
+
 namespace StreamNumDeck.Core.Input;
 
 public interface IKeyboardCaptureService : IAsyncDisposable
@@ -8,9 +10,19 @@ public interface IKeyboardCaptureService : IAsyncDisposable
 
     KeyboardCaptureTargets CaptureTargets { get; }
 
+    string? SelectedKeyboardDeviceId { get; }
+
     event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
     event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
+
+    event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved;
+
+    event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved;
+
+    event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved;
+
+    event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError;
 
     Task StartAsync(CancellationToken cancellationToken = default);
 
@@ -18,6 +30,22 @@ public interface IKeyboardCaptureService : IAsyncDisposable
 
     Task SetCaptureTargetsAsync(
         KeyboardCaptureTargets targets,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
+        CancellationToken cancellationToken = default);
+
+    Task SetSelectedKeyboardDeviceAsync(
+        string? deviceId,
+        CancellationToken cancellationToken = default);
+
+    Task SetDeviceIdentificationKeysAsync(
+        IReadOnlyCollection<DeckKey> numLockOffKeys,
+        IReadOnlyCollection<DeckKey> numLockOnKeys,
+        CancellationToken cancellationToken = default);
+
+    Task SetKeyboardDiagnosticModeAsync(
+        bool isEnabled,
         CancellationToken cancellationToken = default);
 
     Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default);

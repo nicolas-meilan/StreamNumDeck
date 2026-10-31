@@ -43,6 +43,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private readonly IVTubeStudioController vTubeStudioController;
     private readonly MicrophoneMuteOverlayController microphoneMuteOverlay;
     private readonly Dictionary<string, DateTimeOffset> recentErrorNotifications = new(StringComparer.Ordinal);
+    private KeyboardCaptureState diagnosticPreviousCaptureState;
+    private KeyboardCaptureTargets diagnosticPreviousCaptureTargets;
+    private bool keyboardDiagnosticActive;
     private DeckProfile? selectedProfile;
     private bool isNumLockOn;
     private bool captureNumpad = true;
@@ -85,6 +88,21 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public IReadOnlyDictionary<string, DeckKeyTileViewModel> Tiles { get; }
     public ObservableCollection<DeckProfile> Profiles { get; } = new();
     public event Action<string, string>? UserErrorRaised;
+    public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved
+    {
+        add => runtimeService.KeyboardInputObserved += value;
+        remove => runtimeService.KeyboardInputObserved -= value;
+    }
+    public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved
+    {
+        add => runtimeService.RawKeyboardInputObserved += value;
+        remove => runtimeService.RawKeyboardInputObserved -= value;
+    }
+    public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
+    {
+        add => runtimeService.KeyboardDeviceCorrelationObserved += value;
+        remove => runtimeService.KeyboardDeviceCorrelationObserved -= value;
+    }
 
     public DeckProfile? SelectedProfile
     {
@@ -143,16 +161,27 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(true);
         ReplaceProfiles(configuration, configuration.ActiveProfileId);
         await RefreshPreloadedSoundsAsync(configuration, cancellationToken).ConfigureAwait(true);
+        await ApplyDeviceIdentificationKeysAsync(configuration, cancellationToken).ConfigureAwait(true);
 
         runtimeService.NumLockStateChanged += RuntimeService_NumLockStateChanged;
         runtimeService.ActionExecutionFailed += RuntimeService_ActionExecutionFailed;
+        runtimeService.CaptureError += RuntimeService_CaptureError;
         obsController.StateChanged += ObsController_StateChanged;
 
         IsNumLockOn = runtimeService.IsNumLockOn;
         await ApplyCaptureTargetsAsync(configuration.Settings, cancellationToken).ConfigureAwait(true);
         if (configuration.Settings.EnableCaptureOnStartup)
         {
-            await runtimeService.StartAsync(cancellationToken).ConfigureAwait(true);
+            try
+            {
+                await runtimeService.StartAsync(cancellationToken).ConfigureAwait(true);
+            }
+            catch (Exception exception) when (
+                configuration.Settings.SelectedKeyboardDeviceId is not null
+                && !cancellationToken.IsCancellationRequested)
+            {
+                ReportKeyboardCaptureError(exception);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(obsController.LastError))
@@ -213,6 +242,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 .ConfigureAwait(true);
         }
 
+        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, profileId);
     }
 
@@ -224,6 +254,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var configuration = await configurationService
             .UpdateAsync(current => current.AddProfile(profile))
             .ConfigureAwait(true);
+        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, profile.Id);
     }
 
@@ -246,6 +277,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         configuration = await configurationService
             .UpdateAsync(current => current.AddProfile(duplicate))
             .ConfigureAwait(true);
+        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, duplicate.Id);
     }
 
@@ -254,6 +286,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var configuration = await configurationService
             .UpdateAsync(current => current.RemoveProfile(profileId))
             .ConfigureAwait(true);
+        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         await RefreshPreloadedSoundsAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, configuration.ActiveProfileId);
     }
@@ -320,11 +353,21 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         return new SettingsSnapshot(configuration.Settings, password, devices);
     }
 
+    public Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
+        CancellationToken cancellationToken = default) =>
+        runtimeService.GetAvailableKeyboardsAsync(cancellationToken);
+
     public async Task SaveSettingsAsync(
         GlobalSettings settings,
         string? obsPassword,
         CancellationToken cancellationToken = default)
     {
+        var currentConfiguration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(true);
+        var previousKeyboardDeviceId = currentConfiguration.Settings.SelectedKeyboardDeviceId;
+        var keyboardDeviceChanged = !string.Equals(
+            previousKeyboardDeviceId,
+            settings.SelectedKeyboardDeviceId,
+            StringComparison.OrdinalIgnoreCase);
         var passwordChanged = !string.IsNullOrEmpty(obsPassword);
         var previousPassword = passwordChanged
             ? await credentialStore.GetAsync(settings.Obs.CredentialKey, cancellationToken).ConfigureAwait(true)
@@ -333,6 +376,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         AppConfiguration updatedConfiguration;
         try
         {
+            if (keyboardDeviceChanged)
+            {
+                await runtimeService.SetSelectedKeyboardDeviceAsync(
+                    settings.SelectedKeyboardDeviceId,
+                    cancellationToken).ConfigureAwait(true);
+            }
+
             if (passwordChanged)
             {
                 await credentialStore.SetAsync(settings.Obs.CredentialKey, obsPassword!, cancellationToken).ConfigureAwait(true);
@@ -347,6 +397,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             if (passwordChanged)
             {
                 await RestoreCredentialAsync(settings.Obs.CredentialKey, previousPassword).ConfigureAwait(true);
+            }
+
+            if (keyboardDeviceChanged)
+            {
+                await runtimeService.SetSelectedKeyboardDeviceAsync(
+                    previousKeyboardDeviceId,
+                    CancellationToken.None).ConfigureAwait(true);
             }
 
             throw;
@@ -368,6 +425,57 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     public Task PreviewMicrophoneOverlayAsync() => microphoneMuteOverlay.ShowPreviewAsync();
+
+    public async Task StartKeyboardDiagnosticAsync(CancellationToken cancellationToken = default)
+    {
+        if (keyboardDiagnosticActive)
+        {
+            return;
+        }
+
+        diagnosticPreviousCaptureState = runtimeService.CaptureState;
+        diagnosticPreviousCaptureTargets = runtimeService.CaptureTargets;
+
+        try
+        {
+            await runtimeService.SetKeyboardDiagnosticModeAsync(true, cancellationToken).ConfigureAwait(true);
+            await runtimeService.SetCaptureTargetsAsync(KeyboardCaptureTargets.None, cancellationToken)
+                .ConfigureAwait(true);
+            if (diagnosticPreviousCaptureState is KeyboardCaptureState.Stopped)
+            {
+                await runtimeService.StartAsync(cancellationToken).ConfigureAwait(true);
+            }
+
+            keyboardDiagnosticActive = true;
+        }
+        catch
+        {
+            await runtimeService.SetKeyboardDiagnosticModeAsync(false, CancellationToken.None)
+                .ConfigureAwait(true);
+            await runtimeService.SetCaptureTargetsAsync(
+                diagnosticPreviousCaptureTargets,
+                CancellationToken.None).ConfigureAwait(true);
+            throw;
+        }
+    }
+
+    public async Task StopKeyboardDiagnosticAsync(CancellationToken cancellationToken = default)
+    {
+        if (!keyboardDiagnosticActive)
+        {
+            return;
+        }
+
+        keyboardDiagnosticActive = false;
+        await runtimeService.SetKeyboardDiagnosticModeAsync(false, cancellationToken).ConfigureAwait(true);
+        await runtimeService.SetCaptureTargetsAsync(
+            diagnosticPreviousCaptureTargets,
+            cancellationToken).ConfigureAwait(true);
+        if (diagnosticPreviousCaptureState is KeyboardCaptureState.Stopped)
+        {
+            await runtimeService.StopAsync(cancellationToken).ConfigureAwait(true);
+        }
+    }
 
     public async Task<string> TestObsConnectionAsync(
         string host,
@@ -435,6 +543,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             var profile = current.Profiles.Single(candidate => candidate.Id == profileId);
             return current.ReplaceProfile(profile.WithAssignment(layer, key, assignment));
         }).ConfigureAwait(true);
+        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         await RefreshPreloadedSoundsAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, profileId);
     }
@@ -469,6 +578,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         runtimeService.NumLockStateChanged -= RuntimeService_NumLockStateChanged;
         runtimeService.ActionExecutionFailed -= RuntimeService_ActionExecutionFailed;
+        runtimeService.CaptureError -= RuntimeService_CaptureError;
         obsController.StateChanged -= ObsController_StateChanged;
     }
 
@@ -514,6 +624,36 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     private void RuntimeService_ActionExecutionFailed(object? sender, ActionExecutionFailedEventArgs e) =>
         OnUi(() => ReportRuntimeActionFailure(e));
+
+    private void RuntimeService_CaptureError(object? sender, KeyboardCaptureErrorEventArgs e) =>
+        OnUi(() => ReportKeyboardCaptureError(e.Exception));
+
+    private Task ApplyDeviceIdentificationKeysAsync(
+        AppConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = configuration.Profiles.Single(candidate => candidate.Id == configuration.ActiveProfileId);
+        return runtimeService.SetDeviceIdentificationKeysAsync(
+            profile.NumLockOff.Assignments
+                .Where(static assignment => assignment.Value.IdentifySelectedKeyboardBeforeBlocking)
+                .Select(static assignment => assignment.Key)
+                .ToArray(),
+            profile.NumLockOn.Assignments
+                .Where(static assignment => assignment.Value.IdentifySelectedKeyboardBeforeBlocking)
+                .Select(static assignment => assignment.Key)
+                .ToArray(),
+            cancellationToken);
+    }
+
+    private void ReportKeyboardCaptureError(Exception exception)
+    {
+        AppLogger.Error("Keyboard device capture", exception);
+        ErrorTitle = AppStrings.Get("KeyboardDevice_CaptureFailed.Title", "Keyboard capture failed");
+        ErrorText = UserErrorFormatter.Format(
+            AppStrings.Get("KeyboardDevice_CaptureFailed.Message", "Could not read input from the selected keyboard."),
+            exception);
+        UserErrorRaised?.Invoke(ErrorTitle, ErrorText);
+    }
 
     private void ReportRuntimeActionFailure(ActionExecutionFailedEventArgs failure)
     {
@@ -574,6 +714,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             targets |= KeyboardCaptureTargets.NavigationBlock;
         }
 
+        await runtimeService.SetSelectedKeyboardDeviceAsync(
+            settings.SelectedKeyboardDeviceId,
+            cancellationToken).ConfigureAwait(true);
         await runtimeService.SetCaptureTargetsAsync(targets, cancellationToken).ConfigureAwait(true);
         CaptureNumpad = settings.CaptureNumpad;
         CaptureNavigationBlock = settings.CaptureNavigationBlock;

@@ -23,3 +23,20 @@ public sealed class NumLockStateChangedEventArgs(bool isOn) : EventArgs
 {
     public bool IsOn { get; } = isOn;
 }
+
+public sealed class KeyboardInputObservedEventArgs(
+    uint virtualKeyCode,
+    uint scanCode,
+    bool isExtended) : EventArgs
+{
+    public uint VirtualKeyCode { get; } = virtualKeyCode;
+
+    public uint ScanCode { get; } = scanCode;
+
+    public bool IsExtended { get; } = isExtended;
+}
+
+public sealed class KeyboardCaptureErrorEventArgs(Exception exception) : EventArgs
+{
+    public Exception Exception { get; } = Guard.NotNull(exception, nameof(exception));
+}

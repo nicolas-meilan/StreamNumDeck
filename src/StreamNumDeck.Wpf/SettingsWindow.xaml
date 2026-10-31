@@ -207,6 +207,10 @@
                                 <TextBlock Text="{localization:Loc Settings_CaptureOnStartup.Header, Fallback=Enable key capture on startup}" VerticalAlignment="Center" />
                                 <CheckBox x:Name="CaptureOnStartupCheckBox" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitchStyle}" />
                             </Grid>
+                            <Grid Margin="0,5">
+                                <TextBlock Text="{localization:Loc Settings_MuteOverlay.Header, Fallback=Show microphone mute indicator}" VerticalAlignment="Center" />
+                                <CheckBox x:Name="ShowMuteOverlayCheckBox" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitchStyle}" />
+                            </Grid>
 
                             <Border Height="1" Background="#3D3D3D" Margin="0,10" />
                             <Button Content="{localization:Loc Settings_PositionOverlay.Content, Fallback=Position microphone indicator}"
@@ -236,6 +240,23 @@
                                                FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Grid>
+                            <TextBlock Text="{localization:Loc KeyboardDevice_Select.Label, Fallback=Keyboard source}"
+                                       Margin="0,6,0,6" />
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="KeyboardDeviceComboBox" Height="34"
+                                          DisplayMemberPath="DisplayName"
+                                          SelectedValuePath="DeviceId" />
+                                <Button Grid.Column="1" Margin="8,0,0,0" Height="34"
+                                        Content="{localization:Loc KeyboardDevice_Refresh.Content, Fallback=Refresh}"
+                                        Click="RefreshKeyboardDevices_Click" />
+                            </Grid>
+                            <TextBlock Text="{localization:Loc KeyboardDevice_SelectHint.Text, Fallback=Captured keys are blocked globally. Enable device identification per key to wait up to 10 ms.}"
+                                       FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"
+                                       TextWrapping="Wrap" Margin="0,0,0,8" />
                             <Grid Margin="0,5">
                                 <TextBlock Text="{localization:Loc Capture_NumPadHint, Fallback=Intercept numeric keypad keys}" VerticalAlignment="Center" />
                                 <CheckBox x:Name="CaptureNumpadCheckBox" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitchStyle}" />
@@ -244,6 +265,28 @@
                                 <TextBlock Text="{localization:Loc Capture_NavigationBlockHint, Fallback=Intercept the six-key navigation block}" VerticalAlignment="Center" />
                                 <CheckBox x:Name="CaptureNavigationBlockCheckBox" HorizontalAlignment="Right" Style="{StaticResource ToggleSwitchStyle}" />
                             </Grid>
+
+                            <Border Background="#202020" BorderBrush="#414141" BorderThickness="1"
+                                    CornerRadius="8" Padding="12" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="{localization:Loc Settings_ScanCodeDiagnostic.Header, Fallback=Identify a keyboard key}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Text="{localization:Loc Settings_ScanCodeDiagnosticHint.Text, Fallback=Start the diagnostic then press keypad Back and regular Backspace. Keys pass through while active.}"
+                                               Margin="0,4,0,8" FontSize="11"
+                                               Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button x:Name="StartKeyboardDiagnosticButton"
+                                                Content="{localization:Loc Settings_ScanCodeDiagnosticStart.Content, Fallback=Start diagnostic}"
+                                                Click="StartKeyboardDiagnostic_Click" />
+                                        <Button x:Name="StopKeyboardDiagnosticButton" Margin="8,0,0,0"
+                                                Content="{localization:Loc Settings_ScanCodeDiagnosticStop.Content, Fallback=Stop}"
+                                                Click="StopKeyboardDiagnostic_Click" IsEnabled="False" />
+                                    </StackPanel>
+                                    <TextBox x:Name="KeyboardScanCodeDiagnosticOutput" Height="96"
+                                             Margin="0,8,0,0" IsReadOnly="True" TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto" />
+                                </StackPanel>
+                            </Border>
 
                             <Border Height="1" Background="#3D3D3D" Margin="0,10" />
                             <Grid>

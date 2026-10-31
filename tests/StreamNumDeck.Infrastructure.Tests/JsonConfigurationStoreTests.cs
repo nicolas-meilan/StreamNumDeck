@@ -44,8 +44,22 @@ public sealed class JsonConfigurationStoreTests
 
         Assert.IsTrue(File.Exists(paths.ConfigurationFilePath));
         Assert.AreEqual("Основной стрим", configuration.ActiveProfile.Name);
-        Assert.HasCount(22, configuration.ActiveProfile.NumLockOff.Assignments);
-        Assert.HasCount(22, configuration.ActiveProfile.NumLockOn.Assignments);
+        Assert.HasCount(23, configuration.ActiveProfile.NumLockOff.Assignments);
+        Assert.HasCount(23, configuration.ActiveProfile.NumLockOn.Assignments);
+        Assert.IsTrue(configuration.Settings.ShowMuteOverlay);
+    }
+
+    [TestMethod]
+    public async Task SaveAndLoad_PreservesMuteOverlaySetting()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        var configuration = AppConfiguration.CreateDefault().WithSettings(
+            GlobalSettings.Default with { ShowMuteOverlay = false });
+
+        await store.SaveAsync(configuration);
+        var loaded = await store.LoadAsync();
+
+        Assert.IsFalse(loaded.Settings.ShowMuteOverlay);
     }
 
     [TestMethod]
@@ -75,7 +89,10 @@ public sealed class JsonConfigurationStoreTests
         var assignment = new KeyAssignment(
             "Аплодисменты",
             IconReference.CustomAsset("icons/applause.png"),
-            new PlaySoundActionDefinition("C:\\Sounds\\applause.wav", 73, SoundPlaybackBehavior.StopOthers));
+            new PlaySoundActionDefinition("C:\\Sounds\\applause.wav", 73, SoundPlaybackBehavior.StopOthers))
+        {
+            IdentifySelectedKeyboardBeforeBlocking = true,
+        };
         var updatedProfile = configuration.ActiveProfile.WithAssignment(
             NumLockLayer.On,
             DeckKey.NumpadAdd,
@@ -92,6 +109,24 @@ public sealed class JsonConfigurationStoreTests
         var soundAction = Assert.IsInstanceOfType<PlaySoundActionDefinition>(loadedAssignment.Action);
         Assert.AreEqual(73, soundAction.Volume);
         Assert.AreEqual(SoundPlaybackBehavior.StopOthers, soundAction.PlaybackBehavior);
+        Assert.IsTrue(loadedAssignment.IdentifySelectedKeyboardBeforeBlocking);
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_MigratesPerAssignmentDeviceBlockingOption()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        await store.SaveAsync(AppConfiguration.CreateDefault());
+        var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        var assignment = root["configuration"]!["profiles"]![0]!["numLockOff"]!["assignments"]!["numpad1"]!;
+        assignment.AsObject().Remove("identifySelectedKeyboardBeforeBlocking");
+        assignment["experimentalDeviceSpecificBlocking"] = true;
+        File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
+
+        var loaded = await store.LoadAsync();
+
+        Assert.IsTrue(loaded.ActiveProfile.NumLockOff.GetAssignment(DeckKey.Numpad1)
+            .IdentifySelectedKeyboardBeforeBlocking);
     }
 
     [TestMethod]
@@ -287,6 +322,20 @@ public sealed class JsonConfigurationStoreTests
     }
 
     [TestMethod]
+    public async Task SaveAndLoad_PreservesSelectedKeyboardDevice()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        var selectedDeviceId = @"\\?\HID#VID_1234&PID_5678#7&1234567&0&0000";
+        var configuration = AppConfiguration.CreateDefault().WithSettings(
+            GlobalSettings.Default with { SelectedKeyboardDeviceId = selectedDeviceId });
+
+        await store.SaveAsync(configuration);
+        var loaded = await store.LoadAsync();
+
+        Assert.AreEqual(selectedDeviceId, loaded.Settings.SelectedKeyboardDeviceId);
+    }
+
+    [TestMethod]
     public async Task LoadAsync_OldConfigurationWithoutCaptureTargets_EnablesBothGroups()
     {
         using var store = new JsonConfigurationStore(paths);
@@ -303,6 +352,64 @@ public sealed class JsonConfigurationStoreTests
 
         Assert.IsTrue(loaded.Settings.CaptureNumpad);
         Assert.IsTrue(loaded.Settings.CaptureNavigationBlock);
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_OldConfigurationWithoutMuteOverlaySetting_EnablesIndicator()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        await store.SaveAsync(AppConfiguration.CreateDefault());
+        var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        root["configuration"]!["settings"]!.AsObject().Remove("showMuteOverlay");
+        File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
+
+        var loaded = await store.LoadAsync();
+
+        Assert.IsTrue(loaded.Settings.ShowMuteOverlay);
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_OldProfilesWithoutNumpadBack_AddsEmptyAssignmentToBothLayers()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        var configuration = AppConfiguration.CreateDefault()
+            .AddProfile(DeckProfile.CreateDefault("Second profile"), makeActive: false);
+        var preservedAssignment = new KeyAssignment(
+            "Keep this",
+            IconReference.BuiltIn("star"),
+            new OpenUriActionDefinition("https://example.com"));
+        var firstProfile = configuration.Profiles[0].WithAssignment(
+            NumLockLayer.On,
+            DeckKey.NumpadSubtract,
+            preservedAssignment);
+        configuration = configuration.ReplaceProfile(firstProfile);
+        await store.SaveAsync(configuration);
+
+        var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        foreach (var profile in root["configuration"]!["profiles"]!.AsArray())
+        {
+            profile!["numLockOff"]!["assignments"]!.AsObject().Remove("numpadBack");
+            profile["numLockOn"]!["assignments"]!.AsObject().Remove("numpadBack");
+        }
+
+        File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
+
+        var loaded = await store.LoadAsync();
+
+        Assert.HasCount(2, loaded.Profiles);
+        foreach (var profile in loaded.Profiles)
+        {
+            Assert.AreEqual(
+                KeyAssignment.Empty,
+                profile.NumLockOff.GetAssignment(DeckKey.NumpadBack));
+            Assert.AreEqual(
+                KeyAssignment.Empty,
+                profile.NumLockOn.GetAssignment(DeckKey.NumpadBack));
+        }
+
+        Assert.AreEqual(
+            preservedAssignment,
+            loaded.Profiles[0].NumLockOn.GetAssignment(DeckKey.NumpadSubtract));
     }
 
     [TestMethod]

@@ -5,6 +5,22 @@ namespace StreamNumDeck.Infrastructure.Input;
 public static class KeyboardScanCodeTranslator
 {
     public const uint NumLockScanCode = 0x45;
+    private const uint VkBack = 0x08;
+
+    public static bool TryTranslate(
+        uint virtualKeyCode,
+        uint scanCode,
+        bool isExtended,
+        out DeckKey key)
+    {
+        if (virtualKeyCode == VkBack && scanCode == 0x0E && !isExtended)
+        {
+            key = DeckKey.NumpadBack;
+            return true;
+        }
+
+        return TryTranslate(scanCode, isExtended, out key);
+    }
 
     public static bool TryTranslate(uint scanCode, bool isExtended, out DeckKey key)
     {

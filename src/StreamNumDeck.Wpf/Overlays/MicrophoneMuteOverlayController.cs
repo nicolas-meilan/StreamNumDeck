@@ -13,6 +13,7 @@ public sealed class MicrophoneMuteOverlayController : IAsyncDisposable
     };
     private MicrophoneMuteOverlayWindow? window;
     private bool refreshInProgress;
+    private bool isEnabled = true;
     private DateTimeOffset previewUntil;
 
     public MicrophoneMuteOverlayController(
@@ -24,22 +25,39 @@ public sealed class MicrophoneMuteOverlayController : IAsyncDisposable
         timer.Tick += Timer_Tick;
     }
 
-    public async Task StartAsync()
+    public Task StartAsync() => SetEnabledAsync(true);
+
+    public async Task SetEnabledAsync(bool enabled)
     {
+        isEnabled = enabled;
+        if (!enabled)
+        {
+            timer.Stop();
+            previewUntil = default;
+            window?.Hide();
+            return;
+        }
+
         window ??= new MicrophoneMuteOverlayWindow(positionStore);
         await RefreshAsync();
         timer.Start();
     }
 
-    public async Task ShowPreviewAsync()
+    public Task ShowPreviewAsync()
     {
         if (window is null)
         {
-            await StartAsync();
+            window = new MicrophoneMuteOverlayWindow(positionStore);
         }
 
         previewUntil = DateTimeOffset.UtcNow.AddSeconds(10);
         window?.Show();
+        if (!timer.IsEnabled)
+        {
+            timer.Start();
+        }
+
+        return Task.CompletedTask;
     }
 
     public ValueTask DisposeAsync()
@@ -83,7 +101,21 @@ public sealed class MicrophoneMuteOverlayController : IAsyncDisposable
                 return;
             }
 
-            if (await audioControlService.GetDefaultMicrophoneMuteAsync())
+            if (!isEnabled)
+            {
+                window.Hide();
+                timer.Stop();
+                return;
+            }
+
+            var isMicrophoneMuted = await audioControlService.GetDefaultMicrophoneMuteAsync();
+            if (!isEnabled)
+            {
+                window.Hide();
+                return;
+            }
+
+            if (isMicrophoneMuted)
             {
                 if (!window.IsVisible)
                 {

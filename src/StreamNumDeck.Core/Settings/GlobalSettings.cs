@@ -125,6 +125,10 @@ public sealed record GlobalSettings
 
     public bool CaptureNavigationBlock { get; init; } = true;
 
+    public string? SelectedKeyboardDeviceId { get; init; }
+
+    public bool ShowMuteOverlay { get; init; } = true;
+
     public AppTheme Theme { get; }
 
     public ObsConnectionSettings Obs { get; }

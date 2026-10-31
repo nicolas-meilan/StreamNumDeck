@@ -30,6 +30,7 @@ public enum DeckKey
     NumpadEnter,
     Numpad0,
     NumpadDecimal,
+    NumpadBack,
 }
 
 public static class DeckKeyCatalog

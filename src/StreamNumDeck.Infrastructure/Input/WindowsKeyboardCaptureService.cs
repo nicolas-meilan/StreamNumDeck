@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using StreamNumDeck.Core.Deck;
@@ -26,6 +27,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private const uint KeyeventfKeyup = 0x0002;
 
     private readonly object gate = new();
+    private readonly object pressedKeysGate = new();
+    private readonly SemaphoreSlim deviceGate = new(1, 1);
     private readonly Channel<CapturedKeyPress> channel = Channel.CreateBounded<CapturedKeyPress>(
         new BoundedChannelOptions(128)
         {
@@ -35,8 +38,12 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             AllowSynchronousContinuations = false,
         });
     private readonly HashSet<DeckKey> pressedKeys = [];
+    private readonly RawKeyboardInputCorrelator rawKeyboardInputCorrelator = new();
     private readonly LowLevelKeyboardProc hookCallback;
     private readonly Timer numLockMonitor;
+    private WindowsRawInputKeyboardSource? rawInputSource;
+    private string? selectedKeyboardDeviceId;
+    private DeviceIdentificationKeys deviceIdentificationKeys = new([], []);
     private Thread? hookThread;
     private TaskCompletionSource<object?>? startupCompletion;
     private nint hookHandle;
@@ -44,6 +51,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private volatile bool numLockOn;
     private int captureTargets = (int)KeyboardCaptureTargets.All;
     private long suppressNumLockPollingUntil;
+    private int keyboardDiagnosticMode;
     private bool numLockKeyDown;
     private bool controlDown;
     private bool altDown;
@@ -69,9 +77,111 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     public KeyboardCaptureTargets CaptureTargets =>
         (KeyboardCaptureTargets)Volatile.Read(ref captureTargets);
 
+    public string? SelectedKeyboardDeviceId => Volatile.Read(ref selectedKeyboardDeviceId);
+
     public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
     public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
+
+    public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved;
+
+    public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved;
+
+    public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved;
+
+    public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError;
+
+    public async Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
+        CancellationToken cancellationToken = default) =>
+        await WindowsRawInputKeyboardSource.GetAvailableKeyboardsAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task SetSelectedKeyboardDeviceAsync(
+        string? deviceId,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        deviceId = deviceId?.Trim();
+        if (string.IsNullOrWhiteSpace(deviceId))
+        {
+            deviceId = null;
+        }
+        await deviceGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            if (string.Equals(SelectedKeyboardDeviceId, deviceId, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            rawKeyboardInputCorrelator.Clear();
+            var previousDeviceId = SelectedKeyboardDeviceId;
+            if (state is not KeyboardCaptureState.Stopped)
+            {
+                await StopRawInputSourceAsync().ConfigureAwait(false);
+                ClearPressedKeys();
+                Volatile.Write(ref selectedKeyboardDeviceId, deviceId);
+                if (deviceId is not null)
+                {
+                    try
+                    {
+                        await StartRawInputSourceAsync(deviceId, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        Volatile.Write(ref selectedKeyboardDeviceId, previousDeviceId);
+                        if (previousDeviceId is not null)
+                        {
+                            await StartRawInputSourceAsync(previousDeviceId, CancellationToken.None)
+                                .ConfigureAwait(false);
+                        }
+
+                        throw;
+                    }
+                }
+            }
+            else
+            {
+                Volatile.Write(ref selectedKeyboardDeviceId, deviceId);
+            }
+        }
+        finally
+        {
+            deviceGate.Release();
+        }
+    }
+
+    public Task SetDeviceIdentificationKeysAsync(
+        IReadOnlyCollection<DeckKey> numLockOffKeys,
+        IReadOnlyCollection<DeckKey> numLockOnKeys,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        numLockOffKeys = Guard.NotNull(numLockOffKeys, nameof(numLockOffKeys));
+        numLockOnKeys = Guard.NotNull(numLockOnKeys, nameof(numLockOnKeys));
+        if (numLockOffKeys.Concat(numLockOnKeys).Any(key => !DeckKeyCatalog.AssignableKeys.Contains(key)))
+        {
+            throw new ArgumentOutOfRangeException(nameof(numLockOffKeys), "Only assignable deck keys can identify a device.");
+        }
+
+        Volatile.Write(
+            ref deviceIdentificationKeys,
+            new DeviceIdentificationKeys(numLockOffKeys.ToArray(), numLockOnKeys.ToArray()));
+        rawKeyboardInputCorrelator.Clear();
+        return Task.CompletedTask;
+    }
+
+    public Task SetKeyboardDiagnosticModeAsync(
+        bool isEnabled,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        Volatile.Write(ref keyboardDiagnosticMode, isEnabled ? 1 : 0);
+        rawKeyboardInputCorrelator.Clear();
+        return Task.CompletedTask;
+    }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
@@ -96,28 +206,61 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         }
 
         await startupTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        Exception? rawInputStartupFailure = null;
+        await deviceGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            if (SelectedKeyboardDeviceId is { } deviceId)
+            {
+                await StartRawInputSourceAsync(deviceId, CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+        catch (Exception exception)
+        {
+            rawInputStartupFailure = exception;
+        }
+        finally
+        {
+            deviceGate.Release();
+        }
+
+        if (rawInputStartupFailure is not null)
+        {
+            await StopAsync(CancellationToken.None).ConfigureAwait(false);
+            throw rawInputStartupFailure;
+        }
     }
 
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        Thread? thread;
-        uint threadId;
-        lock (gate)
+        await deviceGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            thread = hookThread;
-            threadId = hookThreadId;
-            if (thread is null)
+            await StopRawInputSourceAsync().ConfigureAwait(false);
+
+            Thread? thread;
+            uint threadId;
+            lock (gate)
             {
-                return;
+                thread = hookThread;
+                threadId = hookThreadId;
+                if (thread is null)
+                {
+                    return;
+                }
             }
-        }
 
-        if (threadId != 0 && !PostThreadMessage(threadId, WmQuit, 0, 0))
+            if (threadId != 0 && !PostThreadMessage(threadId, WmQuit, 0, 0))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Unable to stop the keyboard hook message loop.");
+            }
+
+            await Task.Run(thread.Join, cancellationToken).ConfigureAwait(false);
+        }
+        finally
         {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "Unable to stop the keyboard hook message loop.");
+            deviceGate.Release();
         }
-
-        await Task.Run(thread.Join, cancellationToken).ConfigureAwait(false);
     }
 
     public IAsyncEnumerable<CapturedKeyPress> ReadAllAsync(CancellationToken cancellationToken = default) =>
@@ -173,6 +316,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
 
         await StopAsync().ConfigureAwait(false);
         numLockMonitor.Dispose();
+        deviceGate.Dispose();
         disposed = true;
         channel.Writer.TryComplete();
     }
@@ -221,7 +365,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 hookHandle = 0;
             }
 
-            pressedKeys.Clear();
+            ClearPressedKeys();
             hookThreadId = 0;
             lock (gate)
             {
@@ -255,6 +399,16 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
+            if (isDown)
+            {
+                KeyboardInputObserved?.Invoke(
+                    this,
+                    new KeyboardInputObservedEventArgs(
+                        input.VkCode,
+                        input.ScanCode,
+                        (input.Flags & LlkhfExtended) != 0));
+            }
+
             UpdateModifierState(input.VkCode, isDown);
             if (HandleEmergencyPause(input.VkCode, isDown, isUp))
             {
@@ -278,18 +432,72 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
-            if (state is KeyboardCaptureState.Paused
-                || !KeyboardScanCodeTranslator.TryTranslate(
+            var isExtended = (input.Flags & LlkhfExtended) != 0;
+            if (!KeyboardScanCodeTranslator.TryTranslate(
+                    input.VkCode,
                     input.ScanCode,
-                    (input.Flags & LlkhfExtended) != 0,
+                    isExtended,
                     out var key))
+            {
+                return CallNextHookEx(hookHandle, code, wParam, lParam);
+            }
+
+            if (SelectedKeyboardDeviceId is { } selectedDeviceId)
+            {
+                if (state is not KeyboardCaptureState.Running)
+                {
+                    return CallNextHookEx(hookHandle, code, wParam, lParam);
+                }
+
+                if (Volatile.Read(ref keyboardDiagnosticMode) != 0)
+                {
+                    var diagnosticMatch = rawKeyboardInputCorrelator.WaitForKey(key, isDown);
+                    KeyboardDeviceCorrelationObserved?.Invoke(
+                        this,
+                        new KeyboardDeviceCorrelationObservedEventArgs(
+                            input.VkCode,
+                            input.ScanCode,
+                            isExtended,
+                            selectedDeviceId,
+                            diagnosticMatch ? selectedDeviceId : null));
+                    return CallNextHookEx(hookHandle, code, wParam, lParam);
+                }
+
+                if (!CaptureTargets.Includes(key))
+                {
+                    return CallNextHookEx(hookHandle, code, wParam, lParam);
+                }
+
+                if (!RequiresDeviceIdentification(key, numLockOn))
+                {
+                    return 1;
+                }
+
+                var matchedDevice = rawKeyboardInputCorrelator.WaitForKey(key, isDown);
+                KeyboardDeviceCorrelationObserved?.Invoke(
+                    this,
+                    new KeyboardDeviceCorrelationObservedEventArgs(
+                        input.VkCode,
+                        input.ScanCode,
+                        isExtended,
+                        selectedDeviceId,
+                        matchedDevice ? selectedDeviceId : null));
+                if (matchedDevice)
+                {
+                    return 1;
+                }
+
+                return CallNextHookEx(hookHandle, code, wParam, lParam);
+            }
+
+            if (state is KeyboardCaptureState.Paused)
             {
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
             if (isUp)
             {
-                return pressedKeys.Remove(key)
+                return RemovePressedKey(key)
                     ? 1
                     : CallNextHookEx(hookHandle, code, wParam, lParam);
             }
@@ -299,7 +507,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
-            if (pressedKeys.Add(key))
+            if (AddPressedKey(key))
             {
                 channel.Writer.TryWrite(new CapturedKeyPress(
                     key,
@@ -327,6 +535,138 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         }
     }
 
+    private async Task StartRawInputSourceAsync(
+        string deviceId,
+        CancellationToken cancellationToken)
+    {
+        var source = new WindowsRawInputKeyboardSource(deviceId, OnRawInputObserved);
+        source.Faulted += RawInputSource_Faulted;
+        try
+        {
+            await source.StartAsync(cancellationToken).ConfigureAwait(false);
+            rawInputSource = source;
+        }
+        catch
+        {
+            source.Faulted -= RawInputSource_Faulted;
+            await source.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async Task StopRawInputSourceAsync()
+    {
+        var source = rawInputSource;
+        rawInputSource = null;
+        if (source is null)
+        {
+            return;
+        }
+
+        source.Faulted -= RawInputSource_Faulted;
+        await source.DisposeAsync().ConfigureAwait(false);
+    }
+
+    private void OnRawInputObserved(
+        string deviceId,
+        uint virtualKeyCode,
+        uint scanCode,
+        bool isExtended,
+        bool isKeyDown)
+    {
+        var isSelectedDevice = string.Equals(
+            deviceId,
+            SelectedKeyboardDeviceId,
+            StringComparison.OrdinalIgnoreCase);
+        if (isKeyDown)
+        {
+            RawKeyboardInputObserved?.Invoke(
+                this,
+                new RawKeyboardInputObservedEventArgs(
+                    deviceId,
+                    virtualKeyCode,
+                    scanCode,
+                    isExtended,
+                    isSelectedDevice));
+        }
+
+        if (!KeyboardScanCodeTranslator.TryTranslate(
+                virtualKeyCode,
+                scanCode,
+                isExtended,
+                out var key))
+        {
+            return;
+        }
+
+        if (isSelectedDevice
+            && (Volatile.Read(ref keyboardDiagnosticMode) != 0 || CaptureTargets.Includes(key)))
+        {
+            rawKeyboardInputCorrelator.Publish(
+                key,
+                isKeyDown);
+        }
+
+        if (!isSelectedDevice)
+        {
+            return;
+        }
+
+        if (isKeyDown)
+        {
+            if (state is KeyboardCaptureState.Running
+                && CaptureTargets.Includes(key)
+                && AddPressedKey(key))
+            {
+                channel.Writer.TryWrite(new CapturedKeyPress(
+                    key,
+                    numLockOn ? NumLockLayer.On : NumLockLayer.Off,
+                    DateTimeOffset.UtcNow));
+            }
+        }
+        else
+        {
+            RemovePressedKey(key);
+        }
+    }
+
+    private void RawInputSource_Faulted(Exception exception)
+    {
+        CaptureError?.Invoke(this, new KeyboardCaptureErrorEventArgs(exception));
+    }
+
+    private bool RequiresDeviceIdentification(DeckKey key, bool isNumLockOn)
+    {
+        var keys = Volatile.Read(ref deviceIdentificationKeys);
+        return Array.IndexOf(isNumLockOn ? keys.NumLockOn : keys.NumLockOff, key) >= 0;
+    }
+
+    private sealed record DeviceIdentificationKeys(DeckKey[] NumLockOff, DeckKey[] NumLockOn);
+
+    private bool AddPressedKey(DeckKey key)
+    {
+        lock (pressedKeysGate)
+        {
+            return pressedKeys.Add(key);
+        }
+    }
+
+    private bool RemovePressedKey(DeckKey key)
+    {
+        lock (pressedKeysGate)
+        {
+            return pressedKeys.Remove(key);
+        }
+    }
+
+    private void ClearPressedKeys()
+    {
+        lock (pressedKeysGate)
+        {
+            pressedKeys.Clear();
+        }
+    }
+
     private bool HandleEmergencyPause(uint virtualKey, bool isDown, bool isUp)
     {
         if (virtualKey != VkF12)
@@ -340,7 +680,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             SetState(state is KeyboardCaptureState.Paused
                 ? KeyboardCaptureState.Running
                 : KeyboardCaptureState.Paused);
-            pressedKeys.Clear();
+            ClearPressedKeys();
             return true;
         }
 

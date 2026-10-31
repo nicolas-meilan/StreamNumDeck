@@ -57,12 +57,12 @@ StreamNumDeck turns the numeric keypad and the six navigation keys above it into
 
 There is no extra device to buy and no need to leave the game or hunt through open windows.
 
-The physical `NumLock` key switches between two independent layers. That gives you up to **44 actions in every profile**. The key background in StreamNumDeck always shows which layer is active.
+The physical `NumLock` key switches between two independent layers. That gives you up to **46 actions in every profile**. The key background in StreamNumDeck always shows which layer is active.
 
 ### What can I do with it?
 
 - Switch OBS scenes and show or hide sources without using `Alt+Tab`.
-- Mute the microphone and keep a visible crossed-microphone indicator on any monitor.
+- Mute the microphone and optionally keep a visible crossed-microphone indicator on any monitor.
 - Start, stop, or toggle recording and streaming; pause recording; and control the replay buffer from the keyboard.
 - Toggle the virtual camera and Studio Mode, trigger Studio Mode transitions, and control media source playback.
 - Trigger VTube Studio hotkeys and switch Live2D models from the same keyboard.
@@ -74,6 +74,8 @@ The physical `NumLock` key switches between two independent layers. That gives y
 - Create separate profiles for streaming, gaming, editing, work, or any other setup.
 
 Each key can have a label, a built-in symbol, one of the included color emoji, or your own image. Profiles have their own icons and can be switched from the side panel or the system tray.
+
+Captured keys are blocked globally by default. Select a keyboard in Settings → Keyboard, then enable **Identify the selected keyboard for this key** only on keys that should wait up to 10 ms and be blocked only when they come from that device. Other keyboards and timeouts pass through. Closely timed presses of the same key on different keyboards may be misidentified.
 
 ### Download
 
@@ -97,7 +99,7 @@ The portable build stores profiles and settings in `%LocalAppData%\StreamNumDeck
 4. Press the same physical key while StreamNumDeck is running.
 5. Press `NumLock` to configure and use the second layer.
 
-The numpad and the six-key navigation block can be captured independently from the main window. Capture can also be paused from the tray menu. `Ctrl+Alt+F12` remains available as an emergency capture toggle.
+The numpad (including Backspace) and the six-key navigation block can be captured independently from the main window. The microphone indicator can be disabled in **Settings → System**. Capture can also be paused from the tray menu. `Ctrl+Alt+F12` remains available as an emergency capture toggle.
 
 ### OBS Studio
 
@@ -137,14 +139,22 @@ StreamNumDeck has no telemetry or advertising. Profiles, assignments, icons, set
 For users, the files on the [Releases page](https://github.com/nikartom/StreamNumDeck/releases/latest) are the easiest option. Developers need Windows 10 version 1903 or newer (or Windows 11) and the .NET SDK selected by `global.json`.
 
 ```powershell
-./scripts/build.ps1 -Configuration Release
+.\scripts\build.ps1 -Configuration Release
 ```
 
-Create the portable ZIP and Setup executable (Inno Setup 6 is required for Setup):
+That command restores, builds, and tests the solution. To create a standalone publish folder containing `StreamNumDeck.exe`:
 
 ```powershell
-./scripts/package-wpf.ps1 -Version 1.3.0
+dotnet publish .\src\StreamNumDeck.Wpf\StreamNumDeck.Wpf.csproj --configuration Release --output .\artifacts\publish
 ```
+
+To package the portable ZIP and installer executable instead, run the packaging script (Inno Setup 6 is required for Setup):
+
+```powershell
+.\scripts\package-wpf.ps1 -Version 2.0.0
+```
+
+The ZIP and `Setup.exe` are written to `artifacts\release`.
 
 ---
 
@@ -154,16 +164,16 @@ Create the portable ZIP and Setup executable (Inno Setup 6 is required for Setup
 
 ### Ваша клавиатура может стать стрим-деком
 
-StreamNumDeck превращает цифровой блок и шесть навигационных клавиш над ним в настраиваемую панель управления. Не выходя из игры или трансляции, одной клавишей можно переключить сцену OBS, выключить микрофон, запустить звуковой эффект, изменить громкость приложения, открыть ссылку, выполнить макрос или запустить многошаговую автоматизацию.
+StreamNumDeck превращает цифровой блок, клавишу Backspace и шесть навигационных клавиш над ним в настраиваемую панель управления. Не выходя из игры или трансляции, одной клавишей можно переключить сцену OBS, выключить микрофон, запустить звуковой эффект, изменить громкость приложения, открыть ссылку, выполнить макрос или запустить многошаговую автоматизацию.
 
 Не нужно покупать отдельное устройство, сворачивать игру или искать нужное окно среди открытых программ.
 
-Физическая клавиша `NumLock` переключает два независимых слоя. В каждом профиле можно назначить до **44 действий**. Фон клавиши в StreamNumDeck всегда показывает, какой слой сейчас активен.
+Физическая клавиша `NumLock` переключает два независимых слоя. В каждом профиле можно назначить до **46 действий**. Фон клавиши в StreamNumDeck всегда показывает, какой слой сейчас активен.
 
 ### Что можно делать?
 
 - Переключать сцены OBS и показывать или скрывать источники без `Alt+Tab`.
-- Выключать микрофон и видеть поверх всех окон перечёркнутый микрофон на любом мониторе.
+- Выключать микрофон и при желании видеть поверх всех окон перечёркнутый микрофон на любом мониторе.
 - Запускать, останавливать или переключать запись и трансляцию, приостанавливать запись и управлять буфером повтора с клавиатуры.
 - Переключать виртуальную камеру и студийный режим, выполнять переходы и управлять воспроизведением медиаисточников.
 - Запускать хоткеи VTube Studio и переключать Live2D-модели с той же клавиатуры.
@@ -175,6 +185,8 @@ StreamNumDeck превращает цифровой блок и шесть на�
 - Создавать отдельные профили для стрима, игр, монтажа, работы и любых других задач.
 
 На клавише можно оставить подпись, выбрать встроенный символ, одно из цветных эмодзи или загрузить собственное изображение. Для профилей также выбираются иконки, а переключаться между ними можно на боковой панели или через меню в трее.
+
+По умолчанию захваченные клавиши блокируются глобально. Выбери клавиатуру в разделе «Настройки → Клавиатура», затем включай параметр **Идентифицировать выбранную клавиатуру для этой клавиши** только для тех клавиш, которым нужно ждать до 3 мс и блокироваться лишь при нажатии на выбранной клавиатуре. Другие клавиатуры и нажатия после тайм-аута проходят. Почти одновременные нажатия одной клавиши на разных устройствах могут быть определены неверно.
 
 ### Скачать
 
@@ -198,7 +210,7 @@ Portable-версия хранит профили и настройки в `%Loc
 4. Нажмите соответствующую физическую клавишу, пока StreamNumDeck работает.
 5. Нажмите `NumLock`, чтобы настроить и использовать второй слой.
 
-Перехват цифрового блока и шести навигационных клавиш включается независимо в главном окне. В меню трея перехват можно временно приостановить. Сочетание `Ctrl+Alt+F12` остаётся аварийным переключателем перехвата.
+Перехват цифрового блока (включая Backspace) и шести навигационных клавиш включается независимо в главном окне. Индикатор микрофона можно отключить в разделе **Настройки → Система**. В меню трея перехват можно временно приостановить. Сочетание `Ctrl+Alt+F12` остаётся аварийным переключателем перехвата.
 
 ### OBS Studio
 
@@ -238,14 +250,22 @@ StreamNumDeck использует интерфейс OBS WebSocket 5.x, вст�
 Обычным пользователям проще скачать готовые файлы на [странице релиза](https://github.com/nikartom/StreamNumDeck/releases/latest). Для самостоятельной сборки потребуются Windows 10 версии 1903 или новее (либо Windows 11) и версия .NET SDK, указанная в `global.json`.
 
 ```powershell
-./scripts/build.ps1 -Configuration Release
+.\scripts\build.ps1 -Configuration Release
 ```
 
-Создание portable ZIP и установщика Setup (для Setup потребуется Inno Setup 6):
+Эта команда восстанавливает пакеты, собирает проект и запускает тесты. Чтобы создать папку публикации с `StreamNumDeck.exe`:
 
 ```powershell
-./scripts/package-wpf.ps1 -Version 1.3.0
+dotnet publish .\src\StreamNumDeck.Wpf\StreamNumDeck.Wpf.csproj --configuration Release --output .\artifacts\publish
 ```
+
+Для создания portable ZIP и установщика Setup.exe запустите скрипт упаковки (для Setup потребуется Inno Setup 6):
+
+```powershell
+.\scripts\package-wpf.ps1 -Version 2.0.0
+```
+
+ZIP и `Setup.exe` будут созданы в `artifacts\release`.
 
 ## Author and license / Автор и лицензия
 

@@ -207,12 +207,14 @@ public partial class App : System.Windows.Application
         }
     }
 
-    public void ApplySettings(StreamNumDeck.Core.Settings.GlobalSettings settings)
+    public async Task ApplySettingsAsync(StreamNumDeck.Core.Settings.GlobalSettings settings)
     {
         if (MainWindow is MainWindow window && services is not null)
         {
             window.MinimizeToTray = settings.MinimizeToTray;
             services.GetRequiredService<TrayIconService>().SetVisible(settings.MinimizeToTray);
+            await services.GetRequiredService<MicrophoneMuteOverlayController>()
+                .SetEnabledAsync(settings.ShowMuteOverlay);
         }
     }
 
@@ -220,7 +222,10 @@ public partial class App : System.Windows.Application
     {
         try
         {
-            await services!.GetRequiredService<MicrophoneMuteOverlayController>().StartAsync();
+            var provider = services ?? throw new InvalidOperationException("Application services are not initialized.");
+            var configuration = await provider.GetRequiredService<ConfigurationService>().GetAsync();
+            await provider.GetRequiredService<MicrophoneMuteOverlayController>()
+                .SetEnabledAsync(configuration.Settings.ShowMuteOverlay);
         }
         catch (Exception exception)
         {

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using StreamNumDeck.Core.Configuration;
 using StreamNumDeck.Core.Settings;
@@ -144,7 +145,20 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
                 ConfigurationSchema.CurrentVersion);
         }
 
-        var envelope = document.RootElement.Deserialize(jsonContext.ConfigurationEnvelope);
+        var root = JsonNode.Parse(document.RootElement.GetRawText())?.AsObject()
+            ?? throw new InvalidDataException("The configuration document is empty.");
+        var hasMigratedAssignments = AddMissingNumpadBackAssignments(root);
+        hasMigratedAssignments |= MigrateDeviceIdentificationOptions(root);
+        ConfigurationEnvelope? envelope;
+        if (hasMigratedAssignments)
+        {
+            using var migratedDocument = JsonDocument.Parse(root.ToJsonString());
+            envelope = migratedDocument.RootElement.Deserialize(jsonContext.ConfigurationEnvelope);
+        }
+        else
+        {
+            envelope = document.RootElement.Deserialize(jsonContext.ConfigurationEnvelope);
+        }
 
         if (envelope is null)
         {
@@ -159,9 +173,11 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
             .GetProperty("settings");
         var hasCaptureNumpad = settingsDocument.TryGetProperty("captureNumpad", out _);
         var hasCaptureNavigationBlock = settingsDocument.TryGetProperty("captureNavigationBlock", out _);
+        var hasShowMuteOverlay = settingsDocument.TryGetProperty("showMuteOverlay", out _);
         var hasVTubeStudio = settingsDocument.TryGetProperty("vTubeStudio", out _);
         if (!hasCaptureNumpad ||
             !hasCaptureNavigationBlock ||
+            !hasShowMuteOverlay ||
             !hasVTubeStudio ||
             configuration.Settings.VTubeStudio is null)
         {
@@ -169,11 +185,92 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
             {
                 CaptureNumpad = !hasCaptureNumpad || configuration.Settings.CaptureNumpad,
                 CaptureNavigationBlock = !hasCaptureNavigationBlock || configuration.Settings.CaptureNavigationBlock,
+                ShowMuteOverlay = !hasShowMuteOverlay || configuration.Settings.ShowMuteOverlay,
                 VTubeStudio = configuration.Settings.VTubeStudio ?? VTubeStudioConnectionSettings.Default,
             });
         }
 
         return configuration;
+    }
+
+    private static bool AddMissingNumpadBackAssignments(JsonObject root)
+    {
+        if (root["configuration"] is not JsonObject configuration
+            || configuration["profiles"] is not JsonArray profiles)
+        {
+            return false;
+        }
+
+        var migrated = false;
+        foreach (var profile in profiles.OfType<JsonObject>())
+        {
+            foreach (var layerName in new[] { "numLockOff", "numLockOn" })
+            {
+                if (profile[layerName] is JsonObject layer
+                    && layer["assignments"] is JsonObject assignments
+                    && !assignments.ContainsKey("numpadBack"))
+                {
+                    assignments.Add("numpadBack", new JsonObject
+                    {
+                        ["label"] = string.Empty,
+                        ["icon"] = new JsonObject
+                        {
+                            ["kind"] = "builtIn",
+                            ["value"] = "square",
+                        },
+                        ["action"] = new JsonObject
+                        {
+                            ["type"] = "none",
+                        },
+                    });
+                    migrated = true;
+                }
+            }
+        }
+
+        return migrated;
+    }
+
+    private static bool MigrateDeviceIdentificationOptions(JsonObject root)
+    {
+        if (root["configuration"] is not JsonObject configuration
+            || configuration["profiles"] is not JsonArray profiles)
+        {
+            return false;
+        }
+
+        var migrated = false;
+        foreach (var profile in profiles.OfType<JsonObject>())
+        {
+            foreach (var layerName in new[] { "numLockOff", "numLockOn" })
+            {
+                if (profile[layerName] is not JsonObject layer
+                    || layer["assignments"] is not JsonObject assignments)
+                {
+                    continue;
+                }
+
+                foreach (var assignment in assignments.Select(static pair => pair.Value).OfType<JsonObject>())
+                {
+                    var hasExperimentalSetting = assignment.TryGetPropertyValue(
+                            "experimentalDeviceSpecificBlocking",
+                            out var experimentalSetting);
+                    if (hasExperimentalSetting)
+                    {
+                        var enabled = experimentalSetting?.GetValue<bool>() ?? false;
+                        assignment.Remove("experimentalDeviceSpecificBlocking");
+                        if (!assignment.ContainsKey("identifySelectedKeyboardBeforeBlocking"))
+                        {
+                            assignment["identifySelectedKeyboardBeforeBlocking"] = enabled;
+                        }
+
+                        migrated = true;
+                    }
+                }
+            }
+        }
+
+        return migrated;
     }
 
     private async Task WriteAsync(
