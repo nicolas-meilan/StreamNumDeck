@@ -151,7 +151,7 @@
     <value>Якщо ви вважаєте StreamNumDeck корисним, ви можете підтримати його розробку.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Підтримка на DonationAlerts</value>
+    <value>Підтримати</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Будьте в курсі подій</value>
@@ -1029,5 +1029,80 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Ліхтарик</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Увага: ця клавіша реагує на будь-яку клавіатуру, незалежно від глобального вибору клавіатури. Її неможливо заблокувати, тому кожне натискання також вводить текст у програму у фокусі.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Клавіатура для цієї клавіші</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Увага: ця клавіша реагує лише на вибрану клавіатуру. Її неможливо заблокувати, тому кожне натискання також вводить текст у програму у фокусі. Це перевизначає глобальне налаштування клавіатури.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Усі клавіатури (глобальне захоплення)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Будь-яка клавіатура (ігнорувати пристрій)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Не вдалося зчитати введення з вибраної клавіатури.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Не вдалося захопити введення з клавіатури</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Підключіть вибрану клавіатуру знову або виберіть «Усі клавіатури» перед збереженням.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Клавіатуру від’єднано: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Клавіатуру від’єднано</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Не вдалося отримати список клавіатур</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Використовувати глобальне налаштування клавіатури</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Оновити</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Глобальне джерело клавіатури</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Увага: коли вибрано клавіатуру, захоплені клавіші запускають дії, але їх неможливо заблокувати, тому вони також вводять текст у програму у фокусі. Без вибору захоплені клавіші блокуються глобально. Вибір клавіатури для окремої клавіші перевизначає це налаштування.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Показувати індикатор вимкнення мікрофона</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>інша</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>вибрана</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Визначити клавішу клавіатури</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Запустіть діагностику й натисніть клавішу. У журналі буде показано, чи отримав Raw Input натискання з вибраної або іншої клавіатури. Поки діагностика активна, натискання передаються далі.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Запустити діагностику</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Зупинити</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>ні</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>так</value>
   </data>
 </root>

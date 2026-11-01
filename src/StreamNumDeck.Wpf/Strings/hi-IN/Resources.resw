@@ -151,7 +151,7 @@
     <value>यदि आपको StreamNumDeck उपयोगी लगता है, तो आप इसके विकास का समर्थन कर सकते हैं।</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>DonationAlerts पर सहायता</value>
+    <value>दान करें</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>अद्यतित रहें</value>
@@ -1028,5 +1028,80 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>टॉर्च</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>चेतावनी: यह कुंजी वैश्विक कीबोर्ड चयन की परवाह किए बिना हर कीबोर्ड पर प्रतिक्रिया देती है। इसे अवरुद्ध नहीं किया जा सकता, इसलिए हर बार दबाने पर सक्रिय ऐप में भी टाइप होता है।</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>इस कुंजी के लिए कीबोर्ड</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>चेतावनी: यह कुंजी केवल चयनित कीबोर्ड पर प्रतिक्रिया देती है। इसे अवरुद्ध नहीं किया जा सकता, इसलिए हर बार दबाने पर सक्रिय ऐप में भी टाइप होता है। यह वैश्विक कीबोर्ड सेटिंग को बदल देता है।</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>सभी कीबोर्ड (वैश्विक कैप्चर)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>कोई भी कीबोर्ड (डिवाइस अनदेखा करें)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>चयनित कीबोर्ड से इनपुट पढ़ा नहीं जा सका।</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>कीबोर्ड कैप्चर विफल</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>सहेजने से पहले चयनित कीबोर्ड को फिर से कनेक्ट करें या सभी कीबोर्ड चुनें।</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>डिस्कनेक्ट किया गया कीबोर्ड: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>डिस्कनेक्ट किया गया कीबोर्ड</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>कीबोर्ड डिवाइस की सूची प्राप्त नहीं की जा सकी</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>वैश्विक कीबोर्ड सेटिंग उपयोग करें</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>रीफ़्रेश करें</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>वैश्विक कीबोर्ड स्रोत</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>चेतावनी: कीबोर्ड चुने जाने पर, उससे कैप्चर की गई कुंजियाँ क्रियाएँ शुरू करती हैं, लेकिन उन्हें अवरुद्ध नहीं किया जा सकता, इसलिए वे सक्रिय ऐप में भी टाइप होती हैं। चयन न होने पर कैप्चर की गई कुंजियाँ वैश्विक रूप से अवरुद्ध रहती हैं। प्रति-कुंजी कीबोर्ड चयन इस सेटिंग को बदल देता है।</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>माइक्रोफ़ोन म्यूट संकेतक दिखाएँ</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · विस्तारित: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>अन्य</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>चयनित</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>कीबोर्ड कुंजी की पहचान करें</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>निदान शुरू करें और कोई कुंजी दबाएँ। लॉग दिखाता है कि Raw Input को यह चयनित कीबोर्ड से मिली या किसी अन्य कीबोर्ड से। सक्रिय रहने के दौरान कुंजियाँ आगे भेजी जाती हैं।</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>निदान शुरू करें</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>रोकें</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>नहीं</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>हाँ</value>
   </data>
 </root>

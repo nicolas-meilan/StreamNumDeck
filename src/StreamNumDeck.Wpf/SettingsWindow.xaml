@@ -116,7 +116,7 @@
                                 <TextBlock Text="{localization:Loc Settings_SupportHint.Text, Fallback=Support StreamNumDeck development.}"
                                            FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
                             </StackPanel>
-                            <Button Grid.Column="2" Content="{localization:Loc Settings_SupportButton.Content, Fallback=DonationAlerts}"
+                            <Button Grid.Column="2" Content="{localization:Loc Settings_SupportButton.Content, Fallback=Donate}"
                                     Click="Support_Click" />
                         </Grid>
                     </Border>

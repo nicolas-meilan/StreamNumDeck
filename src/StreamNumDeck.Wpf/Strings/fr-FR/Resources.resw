@@ -151,7 +151,7 @@
     <value>Si vous trouvez StreamNumDeck utile, vous pouvez soutenir son développement.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Assistance sur DonationAlerts</value>
+    <value>Faire un don</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Restez à jour</value>
@@ -1029,5 +1029,80 @@ Clic droit pour les actions de profil</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Lampe de poche</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Attention : cette touche réagit à tous les claviers, quel que soit le clavier sélectionné globalement. Elle ne peut pas être bloquée ; chaque pression saisit donc aussi du texte dans l’application active.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Clavier pour cette touche</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Attention : cette touche réagit uniquement au clavier sélectionné. Elle ne peut pas être bloquée ; chaque pression saisit donc aussi du texte dans l’application active. Ce choix remplace le paramètre global du clavier.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Tous les claviers (capture globale)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>N’importe quel clavier (ignorer le périphérique)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Impossible de lire les entrées du clavier sélectionné.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Échec de la capture du clavier</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Reconnectez le clavier sélectionné ou choisissez Tous les claviers avant d’enregistrer.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Clavier déconnecté : {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Clavier déconnecté</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Impossible de répertorier les périphériques clavier</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Utiliser le paramètre global du clavier</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Actualiser</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Source globale du clavier</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Attention : lorsqu’un clavier est sélectionné, ses touches capturées déclenchent des actions, mais ne peuvent pas être bloquées et saisissent donc aussi du texte dans l’application active. Sans sélection, les touches capturées sont bloquées globalement. Le choix d’un clavier pour une touche remplace ce paramètre.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Afficher l’indicateur de micro coupé</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Étendu : {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>autre</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>sélectionné</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identifier une touche du clavier</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Démarrez le diagnostic et appuyez sur une touche. Le journal indique si Raw Input l’a reçue du clavier sélectionné ou d’un autre clavier. Les touches ne sont pas bloquées pendant le diagnostic.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Démarrer le diagnostic</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>non</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>oui</value>
   </data>
 </root>

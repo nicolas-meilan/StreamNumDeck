@@ -151,7 +151,7 @@
     <value>Als u StreamNumDeck nuttig vindt, kunt u de ontwikkeling ervan ondersteunen.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Ondersteuning op DonationAlerts</value>
+    <value>Doneer</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Blijf op de hoogte</value>
@@ -1029,5 +1029,80 @@ Klik met de rechtermuisknop voor profielacties</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Zaklamp</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Waarschuwing: deze toets reageert op elk toetsenbord, ongeacht de globale toetsenbordselectie. De toets kan niet worden geblokkeerd, waardoor elke druk ook in de app met de focus wordt getypt.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Toetsenbord voor deze toets</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Waarschuwing: deze toets reageert alleen op het geselecteerde toetsenbord. De toets kan niet worden geblokkeerd, waardoor elke druk ook in de app met de focus wordt getypt. Dit overschrijft de globale toetsenbordinstelling.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Alle toetsenborden (globale invoer)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Elk toetsenbord (apparaat negeren)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Kan geen invoer lezen van het geselecteerde toetsenbord.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Toetsenbordinvoer vastleggen mislukt</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Sluit het geselecteerde toetsenbord opnieuw aan of kies Alle toetsenborden voordat je opslaat.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Niet-verbonden toetsenbord: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Niet-verbonden toetsenbord</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Kan toetsenbordapparaten niet inventariseren</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Globale toetsenbordinstelling gebruiken</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Vernieuwen</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Globale toetsenbordbron</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Waarschuwing: wanneer een toetsenbord is geselecteerd, activeren de vastgelegde toetsen acties maar kunnen ze niet worden geblokkeerd. Ze worden daarom ook getypt in de app met de focus. Zonder selectie worden vastgelegde toetsen globaal geblokkeerd. Een toetsenbordselectie per toets overschrijft deze instelling.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Microfoon-mute-indicator weergeven</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Uitgebreid: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>overige</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>geselecteerd</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Een toetsenbordtoets identificeren</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Start de diagnostiek en druk op een toets. In het logboek staat of Raw Input de toets heeft ontvangen van het geselecteerde toetsenbord of een ander toetsenbord. Toetsen worden doorgelaten zolang de diagnostiek actief is.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Diagnostiek starten</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Stoppen</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>nee</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>ja</value>
   </data>
 </root>

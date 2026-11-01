@@ -226,7 +226,7 @@
     <value>Si encuentra útil StreamNumDeck, puede apoyar su desarrollo.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Soporte en DonationAlerts</value>
+    <value>Donar</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Manténgase actualizado</value>

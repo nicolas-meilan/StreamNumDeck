@@ -151,7 +151,7 @@
     <value>Se ritieni utile StreamNumDeck, puoi supportarne lo sviluppo.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Supporto su DonationAlerts</value>
+    <value>Dona</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Rimani aggiornato</value>
@@ -1029,5 +1029,80 @@ Fare clic con il pulsante destro del mouse per le azioni del profilo</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Torcia elettrica</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Attenzione: questo tasto risponde a tutte le tastiere, indipendentemente dalla selezione globale. Non può essere bloccato, quindi ogni pressione viene digitata anche nell'applicazione attiva.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Tastiera per questo tasto</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Attenzione: questo tasto risponde solo alla tastiera selezionata. Non può essere bloccato, quindi ogni pressione viene digitata anche nell'applicazione attiva. Questa impostazione sostituisce quella globale della tastiera.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Tutte le tastiere (acquisizione globale)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Qualsiasi tastiera (ignora dispositivo)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Impossibile leggere l'input dalla tastiera selezionata.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Acquisizione della tastiera non riuscita</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Ricollega la tastiera selezionata oppure scegli Tutte le tastiere prima di salvare.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Tastiera disconnessa: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Tastiera disconnessa</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Impossibile enumerare i dispositivi della tastiera</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Usa l'impostazione globale della tastiera</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Aggiorna</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Sorgente globale della tastiera</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Attenzione: quando è selezionata una tastiera, i tasti acquisiti attivano le azioni ma non possono essere bloccati, quindi vengono digitati anche nell'applicazione attiva. Senza una selezione, i tasti acquisiti vengono bloccati globalmente. La selezione della tastiera per singolo tasto sostituisce questa impostazione.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Mostra l'indicatore di microfono disattivato</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Esteso: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>altro</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>selezionata</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identifica un tasto della tastiera</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Avvia la diagnostica e premi un tasto. Il registro mostra se Raw Input lo ha ricevuto dalla tastiera selezionata o da un'altra tastiera. I tasti vengono inoltrati mentre la diagnostica è attiva.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Avvia diagnostica</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Interrompi</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>no</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>sì</value>
   </data>
 </root>

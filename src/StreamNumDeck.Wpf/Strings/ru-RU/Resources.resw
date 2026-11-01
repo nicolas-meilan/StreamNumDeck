@@ -84,6 +84,9 @@
   <data name="Settings_CaptureOnStartup.Header" xml:space="preserve">
     <value>Включать перехват при запуске</value>
   </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Показывать индикатор отключения микрофона</value>
+  </data>
   <data name="Capture_NumPad" xml:space="preserve">
     <value>NumPad</value>
   </data>
@@ -95,6 +98,42 @@
   </data>
   <data name="Capture_NavigationBlockHint" xml:space="preserve">
     <value>Перехватывать клавиши Insert, Home, Page Up, Delete, End и Page Down</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Глобальный источник клавиатуры</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Все клавиатуры (глобальный захват)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Любая клавиатура (игнорировать устройство)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Не удалось получить ввод с выбранной клавиатуры.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Не удалось захватить клавиатуру</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Подключите выбранную клавиатуру повторно или выберите «Все клавиатуры» перед сохранением.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Отключенная клавиатура: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Отключенная клавиатура</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Не удалось перечислить устройства клавиатуры</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Использовать глобальную настройку клавиатуры</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Предупреждение: если клавиатура выбрана, перехваченные нажатия запускают действия, но их нельзя заблокировать, поэтому они также вводятся в активное приложение. Если клавиатура не выбрана, перехваченные нажатия блокируются глобально. Настройка клавиатуры для отдельной клавиши переопределяет этот параметр.</value>
   </data>
   <data name="Settings_Theme.Header" xml:space="preserve">
     <value>Оформление</value>
@@ -122,6 +161,33 @@
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
     <value>Физическая клавиша NumLock переключает два слоя назначений.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Определить клавишу клавиатуры</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Запустите диагностику и нажмите клавишу. В журнале отображается, получил ли Raw Input сигнал с выбранной или другой клавиатуры. Во время работы диагностики нажатия передаются дальше.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Начать диагностику</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Остановить</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Расширенный: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>другая</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>выбранная</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>нет</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>да</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>OBS Studio</value>
@@ -151,7 +217,7 @@
     <value>Если StreamNumDeck оказался полезен, вы можете поддержать его развитие.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Поддержать на DonationAlerts</value>
+    <value>Пожертвовать</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Следите за обновлениями</value>
@@ -266,6 +332,15 @@
   </data>
   <data name="Editor_MacroSequence.Header" xml:space="preserve">
     <value>Последовательность</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Предупреждение: эта клавиша реагирует на любую клавиатуру независимо от глобального выбора клавиатуры. Ее нельзя заблокировать, поэтому каждое нажатие также вводится в активное приложение.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Клавиатура для этой клавиши</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Предупреждение: эта клавиша реагирует только на выбранную клавиатуру. Ее нельзя заблокировать, поэтому каждое нажатие также вводится в активное приложение. Это переопределяет глобальную настройку клавиатуры.</value>
   </data>
   <data name="Common_On" xml:space="preserve">
     <value>включён</value>

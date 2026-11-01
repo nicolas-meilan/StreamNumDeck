@@ -151,7 +151,7 @@
     <value>Wenn Sie StreamNumDeck nützlich finden, können Sie seine Entwicklung unterstützen.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Unterstützung bei DonationAlerts</value>
+    <value>Spenden</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Bleiben Sie auf dem Laufenden</value>
@@ -1029,5 +1029,80 @@ Rechtsklick für Profilaktionen</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Taschenlampe</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Warnung: Diese Taste reagiert auf jede Tastatur, unabhängig von der globalen Tastaturauswahl. Sie kann nicht blockiert werden, daher schreibt jeder Tastendruck auch in die aktive App.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Tastatur für diese Taste</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Warnung: Diese Taste reagiert nur auf die ausgewählte Tastatur. Sie kann nicht blockiert werden, daher schreibt jeder Tastendruck auch in die aktive App. Dies überschreibt die globale Tastatureinstellung.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Alle Tastaturen (globale Erfassung)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Beliebige Tastatur (Gerät ignorieren)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Eingaben von der ausgewählten Tastatur konnten nicht gelesen werden.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Tastaturerfassung fehlgeschlagen</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Verbinden Sie die ausgewählte Tastatur erneut oder wählen Sie vor dem Speichern „Alle Tastaturen“.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Getrennte Tastatur: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Getrennte Tastatur</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Tastaturgeräte konnten nicht aufgelistet werden</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Globale Tastatureinstellung verwenden</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Globale Tastaturquelle</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Warnung: Wenn eine Tastatur ausgewählt ist, lösen ihre erfassten Tasten Aktionen aus, können aber nicht blockiert werden und schreiben daher auch in die aktive App. Ohne Auswahl werden erfasste Tasten global blockiert. Eine Tastaturauswahl pro Taste überschreibt diese Einstellung.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Mikrofon-Stummschaltungsanzeige anzeigen</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Erweitert: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>andere</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>ausgewählt</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Tastendruck identifizieren</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Starten Sie die Diagnose und drücken Sie eine Taste. Das Protokoll zeigt, ob Raw Input sie von der ausgewählten oder einer anderen Tastatur empfangen hat. Während der Diagnose werden Tasten durchgelassen.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Diagnose starten</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Stopp</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>nein</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>ja</value>
   </data>
 </root>

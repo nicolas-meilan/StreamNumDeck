@@ -151,7 +151,7 @@
     <value>StreamNumDeck'i faydalı buluyorsanız geliştirilmesine destek olabilirsiniz.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>DonationAlerts Desteği</value>
+    <value>Bağış yap</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Güncel kalın</value>
@@ -1029,5 +1029,80 @@ Profil işlemleri için sağ tıklayın</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>El feneri</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Uyarı: Bu tuş, genel klavye seçimine bakılmaksızın tüm klavyelere yanıt verir. Engellenemez; bu nedenle her basış, odaktaki uygulamaya da yazı yazar.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Bu tuş için klavye</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Uyarı: Bu tuş yalnızca seçilen klavyeye yanıt verir. Engellenemez; bu nedenle her basış, odaktaki uygulamaya da yazı yazar. Bu ayar genel klavye ayarını geçersiz kılar.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Tüm klavyeler (genel yakalama)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Herhangi bir klavye (aygıtı yoksay)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Seçilen klavyeden giriş okunamadı.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Klavye yakalanamadı</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Kaydetmeden önce seçilen klavyeyi yeniden bağlayın veya Tüm klavyeler'i seçin.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Bağlantısı kesilen klavye: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Bağlantısı kesilen klavye</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Klavye aygıtları listelenemedi</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Genel klavye ayarını kullan</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Yenile</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Genel klavye kaynağı</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Uyarı: Bir klavye seçildiğinde, yakalanan tuşları eylemleri tetikler ancak engellenemez; bu nedenle odaktaki uygulamaya da yazı yazar. Seçim yapılmazsa yakalanan tuşlar genel olarak engellenir. Tuş başına klavye seçimi bu ayarı geçersiz kılar.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Mikrofon sessize alma göstergesini göster</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>diğer</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>seçilen</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Bir klavye tuşunu tanımla</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Tanılamayı başlatın ve bir tuşa basın. Günlük, Raw Input'un tuşu seçilen klavyeden mi yoksa başka bir klavyeden mi aldığını gösterir. Tanılama etkinken tuşlar uygulamalara iletilir.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Tanılamayı başlat</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Durdur</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>hayır</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>evet</value>
   </data>
 </root>

@@ -151,7 +151,7 @@
     <value>Jika Anda merasa StreamNumDeck bermanfaat, Anda dapat mendukung pengembangannya.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Dukungan pada Peringatan Donasi</value>
+    <value>Donasi</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Tetap up to date</value>
@@ -1029,5 +1029,80 @@ Klik kanan untuk tindakan profil</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Senter</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Peringatan: tombol ini merespons semua keyboard, terlepas dari pilihan keyboard global. Tombol ini tidak dapat diblokir, sehingga setiap penekanan juga mengetik di aplikasi yang sedang difokuskan.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Keyboard untuk tombol ini</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Peringatan: tombol ini hanya merespons keyboard yang dipilih. Tombol ini tidak dapat diblokir, sehingga setiap penekanan juga mengetik di aplikasi yang sedang difokuskan. Pengaturan ini menggantikan pengaturan keyboard global.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Semua keyboard (penangkapan global)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Keyboard apa pun (abaikan perangkat)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Tidak dapat membaca input dari keyboard yang dipilih.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Penangkapan keyboard gagal</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Sambungkan kembali keyboard yang dipilih atau pilih Semua keyboard sebelum menyimpan.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Keyboard terputus: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Keyboard terputus</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Tidak dapat mencantumkan perangkat keyboard</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Gunakan pengaturan keyboard global</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Segarkan</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Sumber keyboard global</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Peringatan: saat keyboard dipilih, tombol yang ditangkap akan memicu tindakan tetapi tidak dapat diblokir, sehingga juga mengetik di aplikasi yang sedang difokuskan. Tanpa pilihan, tombol yang ditangkap diblokir secara global. Pilihan keyboard per tombol akan menggantikan pengaturan ini.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Tampilkan indikator mikrofon nonaktif</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Diperluas: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>lainnya</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>dipilih</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identifikasi tombol keyboard</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Mulai diagnostik lalu tekan tombol. Log menunjukkan apakah Raw Input menerimanya dari keyboard yang dipilih atau keyboard lain. Tombol akan diteruskan saat diagnostik aktif.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Mulai diagnostik</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Hentikan</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>tidak</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>ya</value>
   </data>
 </root>

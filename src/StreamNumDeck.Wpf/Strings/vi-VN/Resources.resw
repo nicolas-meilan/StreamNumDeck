@@ -151,7 +151,7 @@
     <value>Nếu bạn thấy StreamNumDeck hữu ích, bạn có thể hỗ trợ sự phát triển của nó.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Hỗ trợ về DonationAlerts</value>
+    <value>Quyên góp</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Luôn cập nhật</value>
@@ -1029,5 +1029,80 @@ Nhấp chuột phải để thực hiện các thao tác trên hồ sơ</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Đèn pin</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Cảnh báo: phím này phản hồi với mọi bàn phím, bất kể lựa chọn bàn phím toàn cục. Không thể chặn phím này, vì vậy mỗi lần nhấn cũng nhập văn bản vào ứng dụng đang được focus.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Bàn phím cho phím này</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Cảnh báo: phím này chỉ phản hồi với bàn phím đã chọn. Không thể chặn phím này, vì vậy mỗi lần nhấn cũng nhập văn bản vào ứng dụng đang được focus. Tùy chọn này ghi đè cài đặt bàn phím toàn cục.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Tất cả bàn phím (bắt toàn cục)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Bất kỳ bàn phím nào (bỏ qua thiết bị)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Không thể đọc dữ liệu đầu vào từ bàn phím đã chọn.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Không thể bắt tín hiệu bàn phím</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Hãy kết nối lại bàn phím đã chọn hoặc chọn Tất cả bàn phím trước khi lưu.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Bàn phím đã ngắt kết nối: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Bàn phím đã ngắt kết nối</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Không thể liệt kê các thiết bị bàn phím</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Dùng cài đặt bàn phím toàn cục</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Làm mới</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Nguồn bàn phím toàn cục</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Cảnh báo: khi chọn bàn phím, các phím được bắt sẽ kích hoạt hành động nhưng không thể bị chặn, nên chúng cũng nhập văn bản vào ứng dụng đang được focus. Nếu không chọn bàn phím, các phím được bắt sẽ bị chặn trên toàn hệ thống. Lựa chọn bàn phím riêng cho từng phím sẽ ghi đè cài đặt này.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Hiển thị chỉ báo tắt tiếng micrô</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>khác</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>đã chọn</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Nhận diện phím bàn phím</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Bắt đầu chẩn đoán rồi nhấn một phím. Nhật ký cho biết Raw Input nhận phím từ bàn phím đã chọn hay bàn phím khác. Khi đang hoạt động, các phím sẽ được chuyển tiếp.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Bắt đầu chẩn đoán</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Dừng</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>không</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>có</value>
   </data>
 </root>

@@ -84,6 +84,9 @@
   <data name="Settings_CaptureOnStartup.Header" xml:space="preserve">
     <value>Aktivera infångning vid start</value>
   </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Visa indikator för avstängd mikrofon</value>
+  </data>
   <data name="Capture_NumPad" xml:space="preserve">
     <value>Numpad</value>
   </data>
@@ -95,6 +98,42 @@
   </data>
   <data name="Capture_NavigationBlockHint" xml:space="preserve">
     <value>Avlyssna knapparna Infoga, Hem, Sida upp, Ta bort, Avsluta och Sida ner</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Global tangentbordskälla</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Alla tangentbord (global infångning)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Valfritt tangentbord (ignorera enhet)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Det gick inte att läsa indata från det valda tangentbordet.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Tangentbordsinfångningen misslyckades</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Anslut det valda tangentbordet igen eller välj Alla tangentbord innan du sparar.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Frånkopplat tangentbord: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Frånkopplat tangentbord</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Det gick inte att lista tangentbordsenheter</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Använd global tangentbordsinställning</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Uppdatera</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Varning: när ett tangentbord är valt utlöser de infångade tangenterna åtgärder men kan inte blockeras, så de skrivs också i appen som har fokus. Utan ett valt tangentbord blockeras infångade tangenter globalt. En tangentbordsinställning per tangent åsidosätter den här inställningen.</value>
   </data>
   <data name="Settings_Theme.Header" xml:space="preserve">
     <value>Utseende</value>
@@ -122,6 +161,33 @@
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
     <value>Den fysiska NumLock-tangenten växlar mellan två tilldelningslager.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identifiera en tangentbordstangent</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Starta diagnostiken och tryck på en tangent. Loggen visar om Raw Input tog emot den från det valda tangentbordet eller ett annat. Tangenter skickas vidare medan diagnostiken är aktiv.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Starta diagnostik</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Stoppa</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Utökad: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>annat</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>valt</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>nej</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>ja</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>OBS Studio</value>
@@ -151,7 +217,7 @@
     <value>Om du tycker att StreamNumDeck är användbar kan du stödja dess utveckling.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Support på DonationAlerts</value>
+    <value>Donera</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Håll dig uppdaterad</value>
@@ -266,6 +332,15 @@
   </data>
   <data name="Editor_MacroSequence.Header" xml:space="preserve">
     <value>Sekvens</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Varning: den här tangenten reagerar på alla tangentbord, oavsett det globala tangentbordsvalet. Den kan inte blockeras, så varje tryckning skrivs också i appen som har fokus.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Tangentbord för den här tangenten</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Varning: den här tangenten reagerar bara på det valda tangentbordet. Den kan inte blockeras, så varje tryckning skrivs också i appen som har fokus. Det här åsidosätter den globala tangentbordsinställningen.</value>
   </data>
   <data name="Common_On" xml:space="preserve">
     <value>På</value>

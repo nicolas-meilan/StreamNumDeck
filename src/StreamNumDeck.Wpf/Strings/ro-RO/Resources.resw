@@ -84,6 +84,9 @@
   <data name="Settings_CaptureOnStartup.Header" xml:space="preserve">
     <value>Activați capturarea la pornire</value>
   </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Afișează indicatorul de microfon dezactivat</value>
+  </data>
   <data name="Capture_NumPad" xml:space="preserve">
     <value>NumPad</value>
   </data>
@@ -95,6 +98,42 @@
   </data>
   <data name="Capture_NavigationBlockHint" xml:space="preserve">
     <value>Interceptați tastele Inserare, Acasă, Pagină în sus, Ștergere, Sfârșit și Pagină în jos</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Sursă globală de tastatură</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Toate tastaturile (captură globală)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Orice tastatură (ignoră dispozitivul)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Nu s-a putut citi intrarea de la tastatura selectată.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Captura tastaturii a eșuat</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Reconectați tastatura selectată sau alegeți Toate tastaturile înainte de salvare.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Tastatură deconectată: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Tastatură deconectată</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Nu s-au putut enumera dispozitivele de tastatură</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Folosiți setarea globală a tastaturii</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Reîmprospătare</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Avertisment: când este selectată o tastatură, tastele capturate declanșează acțiuni, dar nu pot fi blocate, așa că sunt tastate și în aplicația activă. Fără o selecție, tastele capturate sunt blocate global. O selecție de tastatură pentru fiecare tastă înlocuiește această setare.</value>
   </data>
   <data name="Settings_Theme.Header" xml:space="preserve">
     <value>Aspectul</value>
@@ -122,6 +161,33 @@
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
     <value>Tasta fizică NumLock comută între două straturi de atribuire.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identificați o tastă de la tastatură</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Porniți diagnosticul și apăsați o tastă. Jurnalul arată dacă Raw Input a primit-o de la tastatura selectată sau de la o altă tastatură. Tastele sunt transmise mai departe cât timp diagnosticul este activ.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Porniți diagnosticul</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Opriți</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extins: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>altul</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>selectat</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>nu</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>da</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>OBS Studio</value>
@@ -151,7 +217,7 @@
     <value>Dacă găsiți StreamNumDeck utilă, puteți sprijini dezvoltarea acestuia.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Sprijin pentru DonationAlerts</value>
+    <value>Donează</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Fii la curent</value>
@@ -266,6 +332,15 @@
   </data>
   <data name="Editor_MacroSequence.Header" xml:space="preserve">
     <value>Secvență</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Avertisment: această tastă răspunde la orice tastatură, indiferent de selecția globală a tastaturii. Nu poate fi blocată, așa că fiecare apăsare este tastată și în aplicația activă.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Tastatura pentru această tastă</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Avertisment: această tastă răspunde doar la tastatura selectată. Nu poate fi blocată, așa că fiecare apăsare este tastată și în aplicația activă. Aceasta înlocuiește setarea globală a tastaturii.</value>
   </data>
   <data name="Common_On" xml:space="preserve">
     <value>Pornit</value>

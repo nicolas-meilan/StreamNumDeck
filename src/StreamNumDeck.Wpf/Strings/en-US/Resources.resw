@@ -226,7 +226,7 @@
     <value>If you find StreamNumDeck useful, you can support its development.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Donate via DonationAlerts</value>
+    <value>Donate</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Stay up to date</value>

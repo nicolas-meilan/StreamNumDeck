@@ -151,7 +151,7 @@
     <value>If you find StreamNumDeck useful, you can support its development.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>การสนับสนุนการแจ้งเตือนการบริจาค</value>
+    <value>บริจาค</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>ติดตามข่าวสารอยู่เสมอ</value>
@@ -1029,5 +1029,80 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>ไฟฉาย</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>คำเตือน: ปุ่มนี้ตอบสนองต่อทุกแป้นพิมพ์ ไม่ว่าการเลือกแป้นพิมพ์ส่วนกลางจะเป็นแบบใด ไม่สามารถบล็อกได้ ดังนั้นการกดแต่ละครั้งจะพิมพ์ลงในแอปที่กำลังโฟกัสด้วย</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>แป้นพิมพ์สำหรับปุ่มนี้</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>คำเตือน: ปุ่มนี้ตอบสนองเฉพาะแป้นพิมพ์ที่เลือกเท่านั้น ไม่สามารถบล็อกได้ ดังนั้นการกดแต่ละครั้งจะพิมพ์ลงในแอปที่กำลังโฟกัสด้วย การตั้งค่านี้จะแทนที่การตั้งค่าแป้นพิมพ์ส่วนกลาง</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>แป้นพิมพ์ทั้งหมด (จับข้อมูลส่วนกลาง)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>แป้นพิมพ์ใดก็ได้ (ไม่สนใจอุปกรณ์)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>ไม่สามารถอ่านข้อมูลจากแป้นพิมพ์ที่เลือกได้</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>จับข้อมูลแป้นพิมพ์ไม่สำเร็จ</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>เชื่อมต่อแป้นพิมพ์ที่เลือกอีกครั้ง หรือเลือกแป้นพิมพ์ทั้งหมดก่อนบันทึก</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>แป้นพิมพ์ถูกตัดการเชื่อมต่อ: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>แป้นพิมพ์ถูกตัดการเชื่อมต่อ</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>ไม่สามารถค้นหารายการอุปกรณ์แป้นพิมพ์ได้</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>ใช้การตั้งค่าแป้นพิมพ์ส่วนกลาง</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>รีเฟรช</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>แหล่งที่มาของแป้นพิมพ์ส่วนกลาง</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>คำเตือน: เมื่อเลือกแป้นพิมพ์ ปุ่มที่จับได้จะเรียกใช้การทำงาน แต่ไม่สามารถบล็อกได้ จึงพิมพ์ลงในแอปที่กำลังโฟกัสด้วย หากไม่ได้เลือก แป้นที่จับได้จะถูกบล็อกทั่วทั้งระบบ การเลือกแป้นพิมพ์สำหรับแต่ละปุ่มจะแทนที่การตั้งค่านี้</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>แสดงตัวบ่งชี้ปิดเสียงไมโครโฟน</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>อื่น</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>ที่เลือก</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>ระบุแป้นบนแป้นพิมพ์</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>เริ่มการวินิจฉัยแล้วกดแป้นหนึ่งครั้ง บันทึกจะแสดงว่า Raw Input ได้รับข้อมูลจากแป้นพิมพ์ที่เลือกหรือแป้นพิมพ์อื่น ขณะทำงาน แป้นจะส่งผ่านไปยังแอป</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>เริ่มการวินิจฉัย</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>หยุด</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>ไม่</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>ใช่</value>
   </data>
 </root>

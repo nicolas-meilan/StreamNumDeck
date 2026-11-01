@@ -84,6 +84,9 @@
   <data name="Settings_CaptureOnStartup.Header" xml:space="preserve">
     <value>Habilitar captura na inicialização</value>
   </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Mostrar indicador de microfone mudo</value>
+  </data>
   <data name="Capture_NumPad" xml:space="preserve">
     <value>Teclado Numérico</value>
   </data>
@@ -95,6 +98,42 @@
   </data>
   <data name="Capture_NavigationBlockHint" xml:space="preserve">
     <value>Intercepte as teclas Insert, Home, Page Up, Delete, End e Page Down</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Origem global do teclado</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Todos os teclados (captura global)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Qualquer teclado (ignorar dispositivo)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Não foi possível ler a entrada do teclado selecionado.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Falha na captura do teclado</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Reconecte o teclado selecionado ou escolha Todos os teclados antes de salvar.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Teclado desconectado: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Teclado desconectado</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Não foi possível enumerar os dispositivos de teclado</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Usar configuração global do teclado</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Atualizar</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Aviso: quando um teclado está selecionado, as teclas capturadas acionam ações, mas não podem ser bloqueadas; por isso, também são digitadas no aplicativo em foco. Sem seleção, as teclas capturadas são bloqueadas globalmente. A seleção de teclado por tecla substitui essa configuração.</value>
   </data>
   <data name="Settings_Theme.Header" xml:space="preserve">
     <value>Aparência</value>
@@ -122,6 +161,33 @@
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
     <value>A tecla NumLock física alterna entre duas camadas de atribuição.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identificar uma tecla do teclado</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Inicie o diagnóstico e pressione uma tecla. O log mostra se o Raw Input a recebeu do teclado selecionado ou de outro teclado. As teclas são repassadas enquanto o diagnóstico está ativo.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Iniciar diagnóstico</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Parar</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Estendido: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>outro</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>selecionado</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>não</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>sim</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>Estúdio OBS</value>
@@ -151,7 +217,7 @@
     <value>Se você achar StreamNumDeck útil, poderá apoiar seu desenvolvimento.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Suporte em DonationAlerts</value>
+    <value>Doar</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Mantenha-se atualizado</value>
@@ -266,6 +332,15 @@
   </data>
   <data name="Editor_MacroSequence.Header" xml:space="preserve">
     <value>Sequência</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Aviso: esta tecla responde a qualquer teclado, independentemente da seleção global de teclado. Ela não pode ser bloqueada, então cada pressionamento também é digitado no aplicativo em foco.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Teclado para esta tecla</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Aviso: esta tecla responde somente ao teclado selecionado. Ela não pode ser bloqueada, então cada pressionamento também é digitado no aplicativo em foco. Isso substitui a configuração global do teclado.</value>
   </data>
   <data name="Common_On" xml:space="preserve">
     <value>Ligado</value>

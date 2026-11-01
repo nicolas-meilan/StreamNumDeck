@@ -151,7 +151,7 @@
     <value>StreamNumDeck が役立つと思われる場合は、その開発をサポートできます。</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>DonationAlert のサポート</value>
+    <value>寄付する</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>最新情報を入手</value>
@@ -1029,5 +1029,80 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>懐中電灯</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>警告: このキーは、グローバルなキーボード選択に関係なく、すべてのキーボードに反応します。ブロックできないため、押すたびにフォーカス中のアプリにも入力されます。</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>このキーに使用するキーボード</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>警告: このキーは選択したキーボードにのみ反応します。ブロックできないため、押すたびにフォーカス中のアプリにも入力されます。この設定はグローバルなキーボード設定より優先されます。</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>すべてのキーボード (グローバルキャプチャ)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>すべてのキーボード (デバイスを無視)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>選択したキーボードから入力を読み取れませんでした。</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>キーボードのキャプチャに失敗しました</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>保存する前に、選択したキーボードを再接続するか「すべてのキーボード」を選択してください。</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>切断されたキーボード: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>切断されたキーボード</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>キーボードデバイスを列挙できませんでした</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>グローバルなキーボード設定を使用</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>グローバルなキーボードソース</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>警告: キーボードを選択すると、キャプチャしたキーでアクションが実行されますが、ブロックできないため、フォーカス中のアプリにも入力されます。選択しない場合、キャプチャしたキーはグローバルにブロックされます。キーごとのキーボード選択はこの設定より優先されます。</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>マイクのミュートインジケーターを表示</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · 拡張: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>選択中</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>キーボードのキーを識別</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>診断を開始してキーを押してください。ログには、Raw Input が選択したキーボードまたは別のキーボードからキーを受信したかが表示されます。診断中はキーがそのまま入力されます。</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>診断を開始</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>いいえ</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>はい</value>
   </data>
 </root>

@@ -151,7 +151,7 @@
     <value>إذا وجدت StreamNumDeck مفيدًا، فيمكنك دعم تطويره.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>الدعم على تنبيهات التبرع</value>
+    <value>تبرع</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>البقاء حتى الآن</value>
@@ -1028,5 +1028,80 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>مصباح يدوي</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>تحذير: يستجيب هذا المفتاح لكل لوحة مفاتيح، بغض النظر عن تحديد لوحة المفاتيح العام. لا يمكن حظره، لذا تؤدي كل ضغطة أيضًا إلى الكتابة في التطبيق النشط.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>لوحة المفاتيح لهذا المفتاح</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>تحذير: يستجيب هذا المفتاح للوحة المفاتيح المحددة فقط. لا يمكن حظره، لذا تؤدي كل ضغطة أيضًا إلى الكتابة في التطبيق النشط. يتجاوز هذا إعداد لوحة المفاتيح العام.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>كل لوحات المفاتيح (التقاط عام)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>أي لوحة مفاتيح (تجاهل الجهاز)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>تعذرت قراءة الإدخال من لوحة المفاتيح المحددة.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>فشل التقاط لوحة المفاتيح</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>أعِد توصيل لوحة المفاتيح المحددة أو اختر «كل لوحات المفاتيح» قبل الحفظ.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>لوحة المفاتيح غير متصلة: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>لوحة مفاتيح غير متصلة</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>تعذر تعداد أجهزة لوحة المفاتيح</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>استخدام إعداد لوحة المفاتيح العام</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>مصدر لوحة المفاتيح العام</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>تحذير: عند تحديد لوحة مفاتيح، تؤدي المفاتيح التي يتم التقاطها منها إلى تنفيذ الإجراءات، لكن لا يمكن حظرها، لذا تكتب أيضًا في التطبيق النشط. عند عدم تحديد لوحة، يتم حظر المفاتيح الملتقطة على مستوى النظام. يتجاوز تحديد لوحة مفاتيح لكل مفتاح هذا الإعداد.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>إظهار مؤشر كتم صوت الميكروفون</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · ممتد: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>أخرى</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>محدد</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>تحديد مفتاح من لوحة المفاتيح</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>ابدأ التشخيص واضغط على مفتاح. يوضح السجل ما إذا كان Raw Input قد استلمه من لوحة المفاتيح المحددة أو من لوحة أخرى. تمر المفاتيح دون حظر أثناء نشاط التشخيص.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>بدء التشخيص</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>إيقاف</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>لا</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>نعم</value>
   </data>
 </root>

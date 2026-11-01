@@ -151,7 +151,7 @@
     <value>Pokud považujete StreamNumDeck za užitečné, můžete podpořit jeho vývoj.</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>Podpora na DonationAlerts</value>
+    <value>Darovat</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>Zůstaňte v obraze</value>
@@ -1029,5 +1029,80 @@ Kliknutím pravým tlačítkem zobrazíte akce profilu</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Svítilna</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Upozornění: tato klávesa reaguje na každou klávesnici bez ohledu na globální výběr klávesnice. Nelze ji blokovat, takže každé stisknutí také píše do aplikace v popředí.</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Klávesnice pro tuto klávesu</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Upozornění: tato klávesa reaguje pouze na vybranou klávesnici. Nelze ji blokovat, takže každé stisknutí také píše do aplikace v popředí. Toto nastavení přepisuje globální nastavení klávesnice.</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>Všechny klávesnice (globální zachytávání)</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Libovolná klávesnice (ignorovat zařízení)</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>Ze zvolené klávesnice se nepodařilo načíst vstup.</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>Zachytávání klávesnice selhalo</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>Před uložením znovu připojte vybranou klávesnici nebo zvolte Všechny klávesnice.</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>Odpojená klávesnice: {0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Odpojená klávesnice</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>Zařízení klávesnice se nepodařilo vyhledat</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Použít globální nastavení klávesnice</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>Obnovit</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>Globální zdroj klávesnice</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>Upozornění: pokud je vybrána klávesnice, její zachycené klávesy spouštějí akce, ale nelze je blokovat, takže také píší do aplikace v popředí. Bez výběru jsou zachycené klávesy blokovány globálně. Výběr klávesnice pro jednotlivou klávesu toto nastavení přepisuje.</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>Zobrazit indikátor ztlumení mikrofonu</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · rozšířená: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>jiné</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>vybraná</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>Identifikovat klávesu</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>Spusťte diagnostiku a stiskněte klávesu. Protokol ukazuje, zda ji Raw Input přijal z vybrané, nebo jiné klávesnice. Během aktivní diagnostiky klávesy procházejí dál.</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>Spustit diagnostiku</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>Zastavit</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>ne</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>ano</value>
   </data>
 </root>

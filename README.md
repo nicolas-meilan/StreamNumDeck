@@ -42,7 +42,7 @@
 <p align="center">
   <a href="https://github.com/nicolas-meilan/StreamNumDeck/releases/latest"><strong>Download StreamNumDeck</strong></a>
   &nbsp;•&nbsp;
-  <a href="https://www.donationalerts.com/r/kventinburatino">Support the author</a>
+  <a href="https://www.paypal.com/donate/?hosted_button_id=83U8QE9H5UFMS">Support the author</a>
 </p>
 
 ---
@@ -277,6 +277,6 @@ StreamNumDeck is free for permitted personal and other noncommercial use and is 
 
 StreamNumDeck бесплатно распространяется для разрешённого личного и другого некоммерческого использования по лицензии [PolyForm Noncommercial 1.0.0](LICENSE.md). Исходный код открыт для просмотра; для коммерческого использования необходимо отдельное разрешение автора.
 
-If StreamNumDeck is useful to you, you can [support development on DonationAlerts](https://www.donationalerts.com/r/kventinburatino).
+If StreamNumDeck is useful to you, you can [support development](https://www.paypal.com/donate/?hosted_button_id=83U8QE9H5UFMS).
 
-Если StreamNumDeck оказался полезен, вы можете [поддержать разработку на DonationAlerts](https://www.donationalerts.com/r/kventinburatino).
+Если StreamNumDeck оказался полезен, вы можете [поддержать разработку](https://www.paypal.com/donate/?hosted_button_id=83U8QE9H5UFMS).

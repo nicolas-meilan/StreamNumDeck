@@ -13,7 +13,8 @@ namespace StreamNumDeck.Wpf;
 
 public partial class SettingsWindow : Window
 {
-    private static readonly Uri SupportUri = new("https://www.donationalerts.com/r/kventinburatino");
+    private static readonly Uri SupportUri = new(
+        "https://www.paypal.com/donate/?hosted_button_id=83U8QE9H5UFMS");
     private static readonly Uri LatestReleaseUri = new("https://github.com/nicolas-meilan/StreamNumDeck/releases/latest");
 
     private readonly MainViewModel viewModel;

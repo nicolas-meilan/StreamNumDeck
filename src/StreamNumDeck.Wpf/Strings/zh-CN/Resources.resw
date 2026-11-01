@@ -151,7 +151,7 @@
     <value>如果您发现 StreamNumDeck 有用，您可以支持它的开发。</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
-    <value>支持 DonationAlerts</value>
+    <value>捐赠</value>
   </data>
   <data name="Settings_UpdatesTitle.Text" xml:space="preserve">
     <value>保持最新状态</value>
@@ -1029,5 +1029,80 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>手电筒</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>警告：此按键会响应所有键盘，不受全局键盘选择的影响。此按键无法屏蔽，因此每次按下也会向当前获得焦点的应用输入内容。</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>此按键使用的键盘</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>警告：此按键仅响应所选键盘。此按键无法屏蔽，因此每次按下也会向当前获得焦点的应用输入内容。此设置会覆盖全局键盘设置。</value>
+  </data>
+  <data name="KeyboardDevice_All.Label" xml:space="preserve">
+    <value>所有键盘（全局捕获）</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>任意键盘（忽略设备）</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Message" xml:space="preserve">
+    <value>无法读取所选键盘的输入。</value>
+  </data>
+  <data name="KeyboardDevice_CaptureFailed.Title" xml:space="preserve">
+    <value>键盘捕获失败</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
+    <value>请重新连接所选键盘，或在保存前选择“所有键盘”。</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
+    <value>键盘已断开连接：{0}</value>
+  </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>键盘已断开连接</value>
+  </data>
+  <data name="KeyboardDevice_EnumerationFailed" xml:space="preserve">
+    <value>无法枚举键盘设备</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>使用全局键盘设置</value>
+  </data>
+  <data name="KeyboardDevice_Refresh.Content" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="KeyboardDevice_Select.Label" xml:space="preserve">
+    <value>全局键盘来源</value>
+  </data>
+  <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
+    <value>警告：选择键盘后，捕获到的按键会触发操作，但无法屏蔽，因此也会输入到当前获得焦点的应用中。如果未选择键盘，捕获到的按键会在全局范围内屏蔽。单独为按键选择键盘会覆盖此设置。</value>
+  </data>
+  <data name="Settings_MuteOverlay.Header" xml:space="preserve">
+    <value>显示麦克风静音指示器</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
+    <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="Settings_RawInputDiagnosticSelected" xml:space="preserve">
+    <value>已选</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
+    <value>识别键盘按键</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
+    <value>启动诊断并按下一个按键。日志会显示 Raw Input 收到的按键来自所选键盘还是其他键盘。诊断运行期间，按键会正常传递。</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
+    <value>启动诊断</value>
+  </data>
+  <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.No" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
+    <value>是</value>
   </data>
 </root>
