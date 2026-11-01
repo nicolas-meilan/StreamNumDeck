@@ -40,7 +40,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/nikartom/StreamNumDeck/releases/latest"><strong>Download StreamNumDeck</strong></a>
+  <a href="https://github.com/nicolas-meilan/StreamNumDeck/releases/latest"><strong>Download StreamNumDeck</strong></a>
   &nbsp;•&nbsp;
   <a href="https://www.donationalerts.com/r/kventinburatino">Support the author</a>
 </p>
@@ -79,7 +79,7 @@ Captured keys are blocked globally by default. In Settings → Keyboard, you can
 
 ### Download
 
-StreamNumDeck supports **Windows 10 version 1903 or newer and Windows 11**. Choose either file on the [Releases page](https://github.com/nikartom/StreamNumDeck/releases/latest):
+StreamNumDeck supports **Windows 10 version 1903 or newer and Windows 11**. Choose either file on the [Releases page](https://github.com/nicolas-meilan/StreamNumDeck/releases/latest):
 
 - **Setup — recommended:** a regular per-user installer. It does not require administrator rights and adds StreamNumDeck to the Start menu. An optional desktop shortcut is available during installation.
 - **Portable ZIP:** extract the `StreamNumDeck` folder anywhere and run `StreamNumDeck.exe`. No installation is required.
@@ -136,7 +136,7 @@ StreamNumDeck has no telemetry or advertising. Profiles, assignments, icons, set
 
 ### Build from source
 
-For users, the files on the [Releases page](https://github.com/nikartom/StreamNumDeck/releases/latest) are the easiest option. Developers need Windows 10 version 1903 or newer (or Windows 11) and the .NET SDK selected by `global.json`.
+For users, the files on the [Releases page](https://github.com/nicolas-meilan/StreamNumDeck/releases/latest) are the easiest option. Developers need Windows 10 version 1903 or newer (or Windows 11) and the .NET SDK selected by `global.json`.
 
 ```powershell
 .\scripts\build.ps1 -Configuration Release
@@ -190,7 +190,7 @@ StreamNumDeck превращает цифровой блок, клавишу Bac
 
 ### Скачать
 
-StreamNumDeck поддерживает **Windows 10 версии 1903 и новее, а также Windows 11**. На [странице последнего релиза](https://github.com/nikartom/StreamNumDeck/releases/latest) доступны два варианта:
+StreamNumDeck поддерживает **Windows 10 версии 1903 и новее, а также Windows 11**. На [странице последнего релиза](https://github.com/nicolas-meilan/StreamNumDeck/releases/latest) доступны два варианта:
 
 - **Setup — рекомендуется:** обычный установщик для текущего пользователя. Права администратора не нужны. Приложение появится в меню «Пуск», а во время установки можно добавить ярлык на рабочий стол.
 - **Portable ZIP:** распакуйте папку `StreamNumDeck` в любое удобное место и запустите `StreamNumDeck.exe`. Установка не требуется.
@@ -247,7 +247,7 @@ StreamNumDeck использует интерфейс OBS WebSocket 5.x, вст�
 
 ### Сборка из исходников
 
-Обычным пользователям проще скачать готовые файлы на [странице релиза](https://github.com/nikartom/StreamNumDeck/releases/latest). Для самостоятельной сборки потребуются Windows 10 версии 1903 или новее (либо Windows 11) и версия .NET SDK, указанная в `global.json`.
+Обычным пользователям проще скачать готовые файлы на [странице релиза](https://github.com/nicolas-meilan/StreamNumDeck/releases/latest). Для самостоятельной сборки потребуются Windows 10 версии 1903 или новее (либо Windows 11) и версия .NET SDK, указанная в `global.json`.
 
 ```powershell
 .\scripts\build.ps1 -Configuration Release

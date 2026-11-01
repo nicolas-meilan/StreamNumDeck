@@ -217,8 +217,15 @@
                         <TextBlock Text="{localization:Loc Editor_KeyboardDevice.Label, Fallback=Keyboard for this key}"
                                    FontSize="13" FontWeight="SemiBold" />
                         <ComboBox x:Name="KeyboardDeviceComboBox" Height="34" Margin="0,7,0,0"
-                                  DisplayMemberPath="DisplayName" SelectedValuePath="DeviceId"
-                                  SelectionChanged="KeyboardDeviceComboBox_SelectionChanged" />
+                                  SelectedValuePath="DeviceId"
+                                  TextSearch.TextPath="DisplayName"
+                                  SelectionChanged="KeyboardDeviceComboBox_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <Border x:Name="KeyboardDeviceWarning" Visibility="Collapsed"
                                 Background="#332D20" BorderBrush="#8A7040" BorderThickness="1"
                                 CornerRadius="7" Padding="10" Margin="0,8,0,0">

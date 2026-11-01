@@ -14,7 +14,7 @@ namespace StreamNumDeck.Wpf;
 public partial class SettingsWindow : Window
 {
     private static readonly Uri SupportUri = new("https://www.donationalerts.com/r/kventinburatino");
-    private static readonly Uri LatestReleaseUri = new("https://github.com/nikartom/StreamNumDeck/releases/latest");
+    private static readonly Uri LatestReleaseUri = new("https://github.com/nicolas-meilan/StreamNumDeck/releases/latest");
 
     private readonly MainViewModel viewModel;
     private readonly bool focusVTubeStudio;
@@ -208,11 +208,7 @@ public partial class SettingsWindow : Window
             {
                 options.Add(new KeyboardDeviceOption(
                     disconnectedDeviceId,
-                    AppStrings.Format(
-                        "KeyboardDevice_Disconnected.Label",
-                        disconnectedDeviceId.Length > 48
-                            ? disconnectedDeviceId.Substring(0, 48)
-                            : disconnectedDeviceId)));
+                    AppStrings.Get("KeyboardDevice_Disconnected.Simple", "Disconnected keyboard")));
             }
 
             KeyboardDeviceComboBox.ItemsSource = options;

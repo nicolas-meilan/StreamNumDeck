@@ -384,29 +384,32 @@ internal sealed class WindowsRawInputKeyboardSource : IAsyncDisposable
     private static IReadOnlyList<KeyboardDeviceInfo> EnumerateKeyboardDevices()
     {
         var devices = new Dictionary<string, KeyboardDeviceInfo>(StringComparer.OrdinalIgnoreCase);
-        foreach (var device in EnumerateRawKeyboardDevices())
+        var displayNameCounts = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+        foreach (var device in EnumerateRawKeyboardDevices()
+                     .OrderBy(static device => device.DevicePath, StringComparer.OrdinalIgnoreCase))
         {
+            var baseName = FormatDeviceDisplayName(device.DevicePath);
+            displayNameCounts.TryGetValue(baseName, out var duplicateCount);
+            displayNameCounts[baseName] = duplicateCount + 1;
+            var displayName = duplicateCount == 0 ? baseName : $"{baseName} ({duplicateCount + 1})";
             devices[device.DevicePath] = new KeyboardDeviceInfo(
                 device.DevicePath,
-                CreateDisplayName(device.DevicePath));
+                displayName);
         }
 
         return devices.Values.ToArray();
     }
 
-    private static string CreateDisplayName(string devicePath)
+    internal static string FormatDeviceDisplayName(string devicePath)
     {
         var parts = devicePath.Split(new[] { '#' }, StringSplitOptions.RemoveEmptyEntries);
-        var hardwareId = parts.FirstOrDefault(part =>
-            part.IndexOf("VID_", StringComparison.OrdinalIgnoreCase) >= 0
-            && part.IndexOf("PID_", StringComparison.OrdinalIgnoreCase) >= 0);
-        var instanceId = parts.Length > 2 ? parts[2] : devicePath;
-        var shortInstanceId = instanceId.Length > 30
-            ? $"{instanceId.Substring(0, 18)}...{instanceId.Substring(instanceId.Length - 8)}"
-            : instanceId;
-        return hardwareId is null
-            ? $"Keyboard · {shortInstanceId}"
-            : $"{hardwareId} · {shortInstanceId}";
+        var id = parts.Length > 2 ? parts[2] : devicePath.Trim();
+        if (id.Length > 8)
+        {
+            id = $"{id.Substring(0, 8)}...";
+        }
+
+        return $"HID Keyboard ({id})";
     }
 
     private sealed record RawKeyboardDevice(nint Handle, string DevicePath);

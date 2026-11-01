@@ -126,6 +126,9 @@
   <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
     <value>Disconnected keyboard: {0}</value>
   </data>
+  <data name="KeyboardDevice_Disconnected.Simple" xml:space="preserve">
+    <value>Disconnected keyboard</value>
+  </data>
   <data name="KeyboardDevice_Disconnected.Error" xml:space="preserve">
     <value>Reconnect the selected keyboard or choose All keyboards before saving.</value>
   </data>

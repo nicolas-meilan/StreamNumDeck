@@ -256,7 +256,7 @@ public partial class KeyEditorWindow : Window
                 {
                     options.Add(new KeyboardDeviceOption(
                         disconnectedDeviceId,
-                        AppStrings.Format("KeyboardDevice_Disconnected.Label", disconnectedDeviceId)));
+                        AppStrings.Get("KeyboardDevice_Disconnected.Simple", "Disconnected keyboard")));
                 }
 
                 KeyboardDeviceComboBox.ItemsSource = options;

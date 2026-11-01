@@ -248,8 +248,13 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="KeyboardDeviceComboBox" Height="34"
-                                          DisplayMemberPath="DisplayName"
-                                          SelectedValuePath="DeviceId" />
+                                          SelectedValuePath="DeviceId" TextSearch.TextPath="DisplayName">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                                 <Button Grid.Column="1" Margin="8,0,0,0" Height="34"
                                         Content="{localization:Loc KeyboardDevice_Refresh.Content, Fallback=Refresh}"
                                         Click="RefreshKeyboardDevices_Click" />
