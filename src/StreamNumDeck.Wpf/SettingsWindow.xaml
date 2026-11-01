@@ -254,7 +254,7 @@
                                         Content="{localization:Loc KeyboardDevice_Refresh.Content, Fallback=Refresh}"
                                         Click="RefreshKeyboardDevices_Click" />
                             </Grid>
-                            <TextBlock Text="{localization:Loc KeyboardDevice_SelectHint.Text, Fallback=Captured keys are blocked globally. Enable device identification per key to wait up to 10 ms.}"
+                            <TextBlock Text="{localization:Loc KeyboardDevice_SelectHint.Text, Fallback=Selected keyboard keys pass through to the focused app. Without a selection captured keys are blocked globally}"
                                        FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"
                                        TextWrapping="Wrap" Margin="0,0,0,8" />
                             <Grid Margin="0,5">
@@ -271,7 +271,7 @@
                                 <StackPanel>
                                     <TextBlock Text="{localization:Loc Settings_ScanCodeDiagnostic.Header, Fallback=Identify a keyboard key}"
                                                FontWeight="SemiBold" />
-                                    <TextBlock Text="{localization:Loc Settings_ScanCodeDiagnosticHint.Text, Fallback=Start the diagnostic then press keypad Back and regular Backspace. Keys pass through while active.}"
+                                    <TextBlock Text="{localization:Loc Settings_ScanCodeDiagnosticHint.Text, Fallback=Start the diagnostic and press a key. The log shows whether Raw Input received it from the selected keyboard or another keyboard. Keys pass through while active.}"
                                                Margin="0,4,0,8" FontSize="11"
                                                Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
                                     <StackPanel Orientation="Horizontal">

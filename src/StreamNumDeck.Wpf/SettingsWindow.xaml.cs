@@ -27,9 +27,7 @@ public partial class SettingsWindow : Window
         this.viewModel = viewModel;
         this.focusVTubeStudio = focusVTubeStudio;
         InitializeComponent();
-        this.viewModel.KeyboardInputObserved += ViewModel_KeyboardInputObserved;
         this.viewModel.RawKeyboardInputObserved += ViewModel_RawKeyboardInputObserved;
-        this.viewModel.KeyboardDeviceCorrelationObserved += ViewModel_KeyboardDeviceCorrelationObserved;
         Closed += Window_Closed;
     }
 
@@ -268,32 +266,6 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void ViewModel_KeyboardInputObserved(object? sender, KeyboardInputObservedEventArgs e)
-    {
-        if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
-        {
-            return;
-        }
-
-        Dispatcher.BeginInvoke(new Action(() =>
-        {
-            if (!keyboardDiagnosticActive)
-            {
-                return;
-            }
-
-            var extended = AppStrings.Get(
-                e.IsExtended ? "Settings_ScanCodeExtended.Yes" : "Settings_ScanCodeExtended.No",
-                e.IsExtended ? "yes" : "no");
-            var entry = AppStrings.Format(
-                "Settings_ScanCodeDiagnosticEntry",
-                e.VirtualKeyCode,
-                e.ScanCode,
-                extended);
-            AppendKeyboardDiagnosticEntry(entry);
-        }));
-    }
-
     private void ViewModel_RawKeyboardInputObserved(object? sender, RawKeyboardInputObservedEventArgs e)
     {
         if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
@@ -326,37 +298,6 @@ public partial class SettingsWindow : Window
         }));
     }
 
-    private void ViewModel_KeyboardDeviceCorrelationObserved(
-        object? sender,
-        KeyboardDeviceCorrelationObservedEventArgs e)
-    {
-        if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
-        {
-            return;
-        }
-
-        Dispatcher.BeginInvoke(new Action(() =>
-        {
-            if (!keyboardDiagnosticActive)
-            {
-                return;
-            }
-
-            var result = string.Equals(
-                e.MatchedDeviceId,
-                e.SelectedDeviceId,
-                StringComparison.OrdinalIgnoreCase)
-                ? AppStrings.Get("Settings_DeviceCorrelationBlocked", "matched selected device — blocked")
-                : AppStrings.Get("Settings_DeviceCorrelationPassed", "no match — passed through");
-            var entry = AppStrings.Format(
-                "Settings_DeviceCorrelationEntry",
-                result,
-                e.VirtualKeyCode,
-                e.ScanCode);
-            AppendKeyboardDiagnosticEntry(entry);
-        }));
-    }
-
     private void AppendKeyboardDiagnosticEntry(string entry)
     {
         var lines = KeyboardScanCodeDiagnosticOutput.Text
@@ -370,9 +311,7 @@ public partial class SettingsWindow : Window
 
     private async void Window_Closed(object? sender, EventArgs e)
     {
-        viewModel.KeyboardInputObserved -= ViewModel_KeyboardInputObserved;
         viewModel.RawKeyboardInputObserved -= ViewModel_RawKeyboardInputObserved;
-        viewModel.KeyboardDeviceCorrelationObserved -= ViewModel_KeyboardDeviceCorrelationObserved;
         try
         {
             await StopKeyboardDiagnosticAsync();

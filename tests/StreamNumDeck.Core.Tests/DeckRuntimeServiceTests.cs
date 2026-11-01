@@ -289,12 +289,6 @@ public sealed class DeckRuntimeServiceTests
 
         public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved;
 
-        public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
-        {
-            add { }
-            remove { }
-        }
-
         public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError
         {
             add { }
@@ -344,11 +338,6 @@ public sealed class DeckRuntimeServiceTests
             DeviceIdentificationKeysOn = numLockOnKeys.ToArray();
             return Task.CompletedTask;
         }
-
-        public Task SetKeyboardDiagnosticModeAsync(
-            bool isEnabled,
-            CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
 
         public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default)
         {

@@ -106,7 +106,7 @@
     <value>Refresh</value>
   </data>
   <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
-    <value>Captured keys are blocked globally by default. Per key, enable device identification to wait up to 10 ms and block only the selected keyboard. Other keyboards and timeouts pass through.</value>
+    <value>With a keyboard selected, its keys trigger actions and pass through to the focused app. Without a selection, captured keys are blocked globally.</value>
   </data>
   <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
     <value>Disconnected keyboard: {0}</value>
@@ -157,16 +157,13 @@
     <value>Identify a keyboard key</value>
   </data>
   <data name="Settings_ScanCodeDiagnosticHint.Text" xml:space="preserve">
-    <value>Start the diagnostic, then press keypad Back and regular Backspace. Hook, Raw Input, and the final hook correlation result are shown separately. Keys pass through while active.</value>
+    <value>Start the diagnostic and press a key. The log shows whether Raw Input received it from the selected keyboard or another keyboard. Keys pass through while active.</value>
   </data>
   <data name="Settings_ScanCodeDiagnosticStart.Content" xml:space="preserve">
     <value>Start diagnostic</value>
   </data>
   <data name="Settings_ScanCodeDiagnosticStop.Content" xml:space="preserve">
     <value>Stop</value>
-  </data>
-  <data name="Settings_ScanCodeDiagnosticEntry" xml:space="preserve">
-    <value>VK 0x{0:X2} · Scan 0x{1:X2} · Extended: {2}</value>
   </data>
   <data name="Settings_RawInputDiagnosticEntry" xml:space="preserve">
     <value>Raw Input [{0}] · VK 0x{1:X2} · Scan 0x{2:X2} · Extended: {3}</value>
@@ -176,15 +173,6 @@
   </data>
   <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
     <value>other</value>
-  </data>
-  <data name="Settings_DeviceCorrelationEntry" xml:space="preserve">
-    <value>Hook correlation [{0}] · VK 0x{1:X2} · Scan 0x{2:X2}</value>
-  </data>
-  <data name="Settings_DeviceCorrelationBlocked" xml:space="preserve">
-    <value>matched selected device — blocked</value>
-  </data>
-  <data name="Settings_DeviceCorrelationPassed" xml:space="preserve">
-    <value>no match — passed through</value>
   </data>
   <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
     <value>yes</value>
@@ -269,12 +257,6 @@
   </data>
   <data name="Editor_CopyOtherLayer.Content" xml:space="preserve">
     <value>Copy assignment from the other layer</value>
-  </data>
-  <data name="Editor_IdentifySelectedKeyboard.Content" xml:space="preserve">
-    <value>Identify the selected keyboard for this key</value>
-  </data>
-  <data name="Editor_IdentifySelectedKeyboardHint.Text" xml:space="preserve">
-    <value>Requires a selected keyboard. When enabled, waits up to 10 ms. Only that keyboard is blocked; other keyboards or a timeout pass through. Closely timed identical keys can be misidentified.</value>
   </data>
   <data name="Editor_ActionSection.Text" xml:space="preserve">
     <value>Action</value>

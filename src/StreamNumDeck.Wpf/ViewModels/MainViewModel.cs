@@ -89,22 +89,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public IReadOnlyList<AdditionalButtonTileViewModel> AdditionalButtons { get; } = Enumerable.Range(0, AdditionalButtonSettings.Count).Select(static slot => new AdditionalButtonTileViewModel(slot)).ToArray();
     public ObservableCollection<DeckProfile> Profiles { get; } = new();
     public event Action<string, string>? UserErrorRaised;
-    public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved
-    {
-        add => runtimeService.KeyboardInputObserved += value;
-        remove => runtimeService.KeyboardInputObserved -= value;
-    }
     public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved
     {
         add => runtimeService.RawKeyboardInputObserved += value;
         remove => runtimeService.RawKeyboardInputObserved -= value;
     }
-    public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
-    {
-        add => runtimeService.KeyboardDeviceCorrelationObserved += value;
-        remove => runtimeService.KeyboardDeviceCorrelationObserved -= value;
-    }
-
     public DeckProfile? SelectedProfile
     {
         get => selectedProfile;
@@ -162,7 +151,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(true);
         ReplaceProfiles(configuration, configuration.ActiveProfileId);
         await RefreshPreloadedSoundsAsync(configuration, cancellationToken).ConfigureAwait(true);
-        await ApplyDeviceIdentificationKeysAsync(configuration, cancellationToken).ConfigureAwait(true);
 
         runtimeService.NumLockStateChanged += RuntimeService_NumLockStateChanged;
         runtimeService.ActionExecutionFailed += RuntimeService_ActionExecutionFailed;
@@ -243,7 +231,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 .ConfigureAwait(true);
         }
 
-        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, profileId);
     }
 
@@ -255,7 +242,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var configuration = await configurationService
             .UpdateAsync(current => current.AddProfile(profile))
             .ConfigureAwait(true);
-        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, profile.Id);
     }
 
@@ -278,7 +264,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         configuration = await configurationService
             .UpdateAsync(current => current.AddProfile(duplicate))
             .ConfigureAwait(true);
-        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, duplicate.Id);
     }
 
@@ -287,7 +272,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         var configuration = await configurationService
             .UpdateAsync(current => current.RemoveProfile(profileId))
             .ConfigureAwait(true);
-        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         await RefreshPreloadedSoundsAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, configuration.ActiveProfileId);
     }
@@ -439,7 +423,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
         try
         {
-            await runtimeService.SetKeyboardDiagnosticModeAsync(true, cancellationToken).ConfigureAwait(true);
             await runtimeService.SetCaptureTargetsAsync(KeyboardCaptureTargets.None, cancellationToken)
                 .ConfigureAwait(true);
             if (diagnosticPreviousCaptureState is KeyboardCaptureState.Stopped)
@@ -451,8 +434,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         }
         catch
         {
-            await runtimeService.SetKeyboardDiagnosticModeAsync(false, CancellationToken.None)
-                .ConfigureAwait(true);
             await runtimeService.SetCaptureTargetsAsync(
                 diagnosticPreviousCaptureTargets,
                 CancellationToken.None).ConfigureAwait(true);
@@ -468,7 +449,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         }
 
         keyboardDiagnosticActive = false;
-        await runtimeService.SetKeyboardDiagnosticModeAsync(false, cancellationToken).ConfigureAwait(true);
         await runtimeService.SetCaptureTargetsAsync(
             diagnosticPreviousCaptureTargets,
             cancellationToken).ConfigureAwait(true);
@@ -544,7 +524,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             var profile = current.Profiles.Single(candidate => candidate.Id == profileId);
             return current.ReplaceProfile(profile.WithAssignment(layer, key, assignment));
         }).ConfigureAwait(true);
-        await ApplyDeviceIdentificationKeysAsync(configuration).ConfigureAwait(true);
         await RefreshPreloadedSoundsAsync(configuration).ConfigureAwait(true);
         ReplaceProfiles(configuration, profileId);
     }
@@ -652,23 +631,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     private void RuntimeService_CaptureError(object? sender, KeyboardCaptureErrorEventArgs e) =>
         OnUi(() => ReportKeyboardCaptureError(e.Exception));
-
-    private Task ApplyDeviceIdentificationKeysAsync(
-        AppConfiguration configuration,
-        CancellationToken cancellationToken = default)
-    {
-        var profile = configuration.Profiles.Single(candidate => candidate.Id == configuration.ActiveProfileId);
-        return runtimeService.SetDeviceIdentificationKeysAsync(
-            profile.NumLockOff.Assignments
-                .Where(static assignment => assignment.Value.IdentifySelectedKeyboardBeforeBlocking)
-                .Select(static assignment => assignment.Key)
-                .ToArray(),
-            profile.NumLockOn.Assignments
-                .Where(static assignment => assignment.Value.IdentifySelectedKeyboardBeforeBlocking)
-                .Select(static assignment => assignment.Key)
-                .ToArray(),
-            cancellationToken);
-    }
 
     private void ReportKeyboardCaptureError(Exception exception)
     {

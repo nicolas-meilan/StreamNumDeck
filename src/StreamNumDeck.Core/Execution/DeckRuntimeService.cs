@@ -50,12 +50,6 @@ public sealed class DeckRuntimeService(
         remove => keyboardCapture.RawKeyboardInputObserved -= value;
     }
 
-    public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
-    {
-        add => keyboardCapture.KeyboardDeviceCorrelationObserved += value;
-        remove => keyboardCapture.KeyboardDeviceCorrelationObserved -= value;
-    }
-
     public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError
     {
         add => keyboardCapture.CaptureError += value;
@@ -90,11 +84,6 @@ public sealed class DeckRuntimeService(
         IReadOnlyCollection<DeckKey> numLockOnKeys,
         CancellationToken cancellationToken = default) =>
         keyboardCapture.SetDeviceIdentificationKeysAsync(numLockOffKeys, numLockOnKeys, cancellationToken);
-
-    public Task SetKeyboardDiagnosticModeAsync(
-        bool isEnabled,
-        CancellationToken cancellationToken = default) =>
-        keyboardCapture.SetKeyboardDiagnosticModeAsync(isEnabled, cancellationToken);
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {

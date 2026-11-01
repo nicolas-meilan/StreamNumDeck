@@ -38,12 +38,10 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             AllowSynchronousContinuations = false,
         });
     private readonly HashSet<DeckKey> pressedKeys = [];
-    private readonly RawKeyboardInputCorrelator rawKeyboardInputCorrelator = new();
     private readonly LowLevelKeyboardProc hookCallback;
     private readonly Timer numLockMonitor;
     private WindowsRawInputKeyboardSource? rawInputSource;
     private string? selectedKeyboardDeviceId;
-    private DeviceIdentificationKeys deviceIdentificationKeys = new([], []);
     private Thread? hookThread;
     private TaskCompletionSource<object?>? startupCompletion;
     private nint hookHandle;
@@ -51,7 +49,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private volatile bool numLockOn;
     private int captureTargets = (int)KeyboardCaptureTargets.All;
     private long suppressNumLockPollingUntil;
-    private int keyboardDiagnosticMode;
     private bool numLockKeyDown;
     private bool controlDown;
     private bool altDown;
@@ -87,8 +84,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
 
     public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved;
 
-    public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved;
-
     public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError;
 
     public async Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
@@ -114,7 +109,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return;
             }
 
-            rawKeyboardInputCorrelator.Clear();
             var previousDeviceId = SelectedKeyboardDeviceId;
             if (state is not KeyboardCaptureState.Stopped)
             {
@@ -165,21 +159,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             throw new ArgumentOutOfRangeException(nameof(numLockOffKeys), "Only assignable deck keys can identify a device.");
         }
 
-        Volatile.Write(
-            ref deviceIdentificationKeys,
-            new DeviceIdentificationKeys(numLockOffKeys.ToArray(), numLockOnKeys.ToArray()));
-        rawKeyboardInputCorrelator.Clear();
-        return Task.CompletedTask;
-    }
-
-    public Task SetKeyboardDiagnosticModeAsync(
-        bool isEnabled,
-        CancellationToken cancellationToken = default)
-    {
-        Guard.NotDisposed(disposed, this);
-        cancellationToken.ThrowIfCancellationRequested();
-        Volatile.Write(ref keyboardDiagnosticMode, isEnabled ? 1 : 0);
-        rawKeyboardInputCorrelator.Clear();
         return Task.CompletedTask;
     }
 
@@ -449,44 +428,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                     return CallNextHookEx(hookHandle, code, wParam, lParam);
                 }
 
-                if (Volatile.Read(ref keyboardDiagnosticMode) != 0)
-                {
-                    var diagnosticMatch = rawKeyboardInputCorrelator.WaitForKey(key, isDown);
-                    KeyboardDeviceCorrelationObserved?.Invoke(
-                        this,
-                        new KeyboardDeviceCorrelationObservedEventArgs(
-                            input.VkCode,
-                            input.ScanCode,
-                            isExtended,
-                            selectedDeviceId,
-                            diagnosticMatch ? selectedDeviceId : null));
-                    return CallNextHookEx(hookHandle, code, wParam, lParam);
-                }
-
-                if (!CaptureTargets.Includes(key))
-                {
-                    return CallNextHookEx(hookHandle, code, wParam, lParam);
-                }
-
-                if (!RequiresDeviceIdentification(key, numLockOn))
-                {
-                    return 1;
-                }
-
-                var matchedDevice = rawKeyboardInputCorrelator.WaitForKey(key, isDown);
-                KeyboardDeviceCorrelationObserved?.Invoke(
-                    this,
-                    new KeyboardDeviceCorrelationObservedEventArgs(
-                        input.VkCode,
-                        input.ScanCode,
-                        isExtended,
-                        selectedDeviceId,
-                        matchedDevice ? selectedDeviceId : null));
-                if (matchedDevice)
-                {
-                    return 1;
-                }
-
+                // Raw Input identifies the selected device and queues its action.
+                // The low-level hook has no device identity, so selected-device keys pass through.
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
@@ -599,14 +542,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             return;
         }
 
-        if (isSelectedDevice
-            && (Volatile.Read(ref keyboardDiagnosticMode) != 0 || CaptureTargets.Includes(key)))
-        {
-            rawKeyboardInputCorrelator.Publish(
-                key,
-                isKeyDown);
-        }
-
         if (!isSelectedDevice)
         {
             return;
@@ -634,14 +569,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     {
         CaptureError?.Invoke(this, new KeyboardCaptureErrorEventArgs(exception));
     }
-
-    private bool RequiresDeviceIdentification(DeckKey key, bool isNumLockOn)
-    {
-        var keys = Volatile.Read(ref deviceIdentificationKeys);
-        return Array.IndexOf(isNumLockOn ? keys.NumLockOn : keys.NumLockOff, key) >= 0;
-    }
-
-    private sealed record DeviceIdentificationKeys(DeckKey[] NumLockOff, DeckKey[] NumLockOn);
 
     private bool AddPressedKey(DeckKey key)
     {

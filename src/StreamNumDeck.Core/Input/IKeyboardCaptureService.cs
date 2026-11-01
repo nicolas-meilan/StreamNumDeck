@@ -20,8 +20,6 @@ public interface IKeyboardCaptureService : IAsyncDisposable
 
     event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved;
 
-    event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved;
-
     event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError;
 
     Task StartAsync(CancellationToken cancellationToken = default);
@@ -42,10 +40,6 @@ public interface IKeyboardCaptureService : IAsyncDisposable
     Task SetDeviceIdentificationKeysAsync(
         IReadOnlyCollection<DeckKey> numLockOffKeys,
         IReadOnlyCollection<DeckKey> numLockOnKeys,
-        CancellationToken cancellationToken = default);
-
-    Task SetKeyboardDiagnosticModeAsync(
-        bool isEnabled,
         CancellationToken cancellationToken = default);
 
     Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default);
