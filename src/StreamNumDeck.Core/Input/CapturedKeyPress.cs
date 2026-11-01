@@ -5,7 +5,8 @@ namespace StreamNumDeck.Core.Input;
 public readonly record struct CapturedKeyPress(
     DeckKey Key,
     NumLockLayer Layer,
-    DateTimeOffset Timestamp);
+    DateTimeOffset Timestamp,
+    uint? VirtualKeyCode = null);
 
 public enum KeyboardCaptureState
 {
@@ -27,13 +28,19 @@ public sealed class NumLockStateChangedEventArgs(bool isOn) : EventArgs
 public sealed class KeyboardInputObservedEventArgs(
     uint virtualKeyCode,
     uint scanCode,
-    bool isExtended) : EventArgs
+    bool isExtended,
+    bool isKeyDown = true,
+    CapturedKeyPress? capturedKeyPress = null) : EventArgs
 {
     public uint VirtualKeyCode { get; } = virtualKeyCode;
 
     public uint ScanCode { get; } = scanCode;
 
     public bool IsExtended { get; } = isExtended;
+
+    public bool IsKeyDown { get; } = isKeyDown;
+
+    public CapturedKeyPress? CapturedKeyPress { get; } = capturedKeyPress;
 }
 
 public sealed class KeyboardCaptureErrorEventArgs(Exception exception) : EventArgs

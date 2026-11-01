@@ -106,6 +106,7 @@ public sealed class DeckRuntimeServiceTests
             await runtime.StartAsync();
             await capture.SetCaptureTargetsAsync(KeyboardCaptureTargets.None);
             capture.PublishObservedInput(0x41, 0x1E, isExtended: false);
+            capture.PublishObservedInput(0x41, 0x1E, isExtended: false, isKeyDown: false);
             await Task.Delay(100);
             Assert.AreEqual(0, executor.StartCount, "An additional key must be ignored while NumPad capture is disabled.");
 
@@ -116,6 +117,109 @@ public sealed class DeckRuntimeServiceTests
         finally
         {
             executor.ReleaseFirst.TrySetResult(true);
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task AdditionalButtonSequences_OnlyWaitForConfiguredAmbiguousPrefixes()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var profile = configuration.ActiveProfile.WithAssignment(
+                NumLockLayer.Off,
+                DeckKey.Numpad0,
+                new KeyAssignment("Numpad zero", IconReference.BuiltIn("play"), new OpenPathActionDefinition("numpad-zero")))
+            .WithAdditionalButton(new AdditionalButtonSettings(0, 0x60,
+                new KeyAssignment("Zero", IconReference.BuiltIn("play"), new OpenPathActionDefinition("zero"))))
+            .WithAdditionalButton(new AdditionalButtonSettings(1, null,
+                new KeyAssignment("Double zero", IconReference.BuiltIn("play"), new OpenPathActionDefinition("double")))
+            {
+                VirtualKeySequence = [0x60, 0x60],
+            })
+            .WithAdditionalButton(new AdditionalButtonSettings(2, 0x61,
+                new KeyAssignment("One", IconReference.BuiltIn("play"), new OpenPathActionDefinition("one"))));
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration.ReplaceProfile(profile)));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync("selected-keyboard");
+            await runtime.StartAsync();
+
+            capture.PublishRawInput(0x61, isSelectedDevice: false);
+            Assert.AreEqual(0, executor.ExecutedPaths.Count, "A different keyboard must not trigger the configured button.");
+            capture.PublishRawInput(0x61, isSelectedDevice: true);
+            Assert.IsTrue(executor.FirstExecution.Task.IsCompleted, "A non-ambiguous key must execute immediately.");
+            Assert.AreEqual("one", executor.ExecutedPaths.Single());
+
+            capture.PublishRawInput(0x60, isSelectedDevice: true);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 2);
+            CollectionAssert.AreEqual(new[] { "one", "zero" }, executor.ExecutedPaths.ToArray());
+            capture.PublishRawInput(0x60, isSelectedDevice: true, isKeyDown: false);
+
+            capture.PublishRawInput(0x60, isSelectedDevice: true);
+            capture.PublishRawInput(0x60, isSelectedDevice: true, isKeyDown: false);
+            capture.PublishRawInput(0x60, isSelectedDevice: true);
+            capture.PublishRawInput(0x60, isSelectedDevice: true, isKeyDown: false);
+            await WaitWithTimeoutAsync(executor.ThirdExecution.Task);
+            CollectionAssert.AreEqual(new[] { "one", "zero", "double" }, executor.ExecutedPaths.ToArray());
+            Assert.IsFalse(executor.ExecutedPaths.Contains("numpad-zero"),
+                "A key assigned to a manual button sequence must not also execute its NumPad assignment.");
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task AdditionalButtonSequence_UsesNormalKeyActionWhenOnlyLongerSequenceMatches()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var profile = configuration.ActiveProfile
+            .WithAssignment(
+                NumLockLayer.Off,
+                DeckKey.Numpad0,
+                new KeyAssignment("Zero", IconReference.BuiltIn("play"), new OpenPathActionDefinition("zero")))
+            .WithAdditionalButton(new AdditionalButtonSettings(1, null,
+                new KeyAssignment("Double zero", IconReference.BuiltIn("play"), new OpenPathActionDefinition("double")))
+            {
+                VirtualKeySequence = [0x60, 0x60],
+            });
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration.ReplaceProfile(profile)));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync("selected-keyboard");
+            await runtime.StartAsync();
+
+            capture.PublishRawInput(0x60, isSelectedDevice: true);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 1);
+            CollectionAssert.AreEqual(new[] { "zero" }, executor.ExecutedPaths.ToArray());
+            capture.PublishRawInput(0x60, isSelectedDevice: true, isKeyDown: false);
+
+            capture.PublishRawInput(0x60, isSelectedDevice: true);
+            capture.PublishRawInput(0x60, isSelectedDevice: true, isKeyDown: false);
+            capture.PublishRawInput(0x60, isSelectedDevice: true);
+            capture.PublishRawInput(0x60, isSelectedDevice: true, isKeyDown: false);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 2);
+            CollectionAssert.AreEqual(new[] { "zero", "double" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
             await runtime.DisposeAsync();
         }
     }
@@ -353,14 +457,80 @@ public sealed class DeckRuntimeServiceTests
         public void Publish(DeckKey key) => channel.Writer.TryWrite(
             new CapturedKeyPress(key, NumLockLayer.Off, DateTimeOffset.UtcNow));
 
-        public void PublishObservedInput(uint virtualKeyCode, uint scanCode, bool isExtended) =>
+        public void PublishObservedInput(
+            uint virtualKeyCode,
+            uint scanCode,
+            bool isExtended,
+            bool isKeyDown = true) =>
             KeyboardInputObserved?.Invoke(
                 this,
-                new KeyboardInputObservedEventArgs(virtualKeyCode, scanCode, isExtended));
+                new KeyboardInputObservedEventArgs(virtualKeyCode, scanCode, isExtended, isKeyDown));
 
-        public void PublishRawInput(uint virtualKeyCode, bool isSelectedDevice) =>
+        public void PublishRawInput(uint virtualKeyCode, bool isSelectedDevice, bool isKeyDown = true)
+        {
+            var capturedKeyPress = isSelectedDevice
+                && isKeyDown
+                && virtualKeyCode == 0x60
+                    ? new CapturedKeyPress(
+                        DeckKey.Numpad0,
+                        NumLockLayer.Off,
+                        DateTimeOffset.UtcNow,
+                        virtualKeyCode)
+                    : (CapturedKeyPress?)null;
             RawKeyboardInputObserved?.Invoke(this,
-                new RawKeyboardInputObservedEventArgs("test", virtualKeyCode, 0, false, isSelectedDevice));
+                new RawKeyboardInputObservedEventArgs(
+                    "test",
+                    virtualKeyCode,
+                    0,
+                    false,
+                    isSelectedDevice,
+                    isKeyDown,
+                    capturedKeyPress));
+            if (capturedKeyPress is CapturedKeyPress keyPress)
+            {
+                channel.Writer.TryWrite(keyPress);
+            }
+        }
+    }
+
+    private sealed class SequenceRecordingExecutor : IActionExecutor
+    {
+        private readonly System.Collections.Concurrent.ConcurrentQueue<string> executedPaths = new();
+        private int executionCount;
+
+        public TaskCompletionSource<bool> FirstExecution { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> SecondExecution { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> ThirdExecution { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public IReadOnlyCollection<string> ExecutedPaths => executedPaths.ToArray();
+
+        public bool CanExecute(ActionDefinition action) => action is OpenPathActionDefinition;
+
+        public Task ExecuteAsync(ActionDefinition action, CancellationToken cancellationToken = default)
+        {
+            var path = ((OpenPathActionDefinition)action).Path;
+            executedPaths.Enqueue(path);
+            var execution = Interlocked.Increment(ref executionCount);
+            if (execution == 1)
+            {
+                FirstExecution.TrySetResult(true);
+            }
+            else if (execution == 2)
+            {
+                SecondExecution.TrySetResult(true);
+            }
+            else
+            {
+                ThirdExecution.TrySetResult(true);
+            }
+
+            return Task.CompletedTask;
+        }
     }
 
     private sealed class InMemoryConfigurationStore(AppConfiguration configuration) : IConfigurationStore

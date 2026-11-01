@@ -80,6 +80,46 @@ public sealed class JsonConfigurationStoreTests
     }
 
     [TestMethod]
+    public async Task SaveAndLoad_PreservesAdditionalButtonKeySequence()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        var configuration = AppConfiguration.CreateDefault();
+        var button = new AdditionalButtonSettings(2, null, KeyAssignment.Empty)
+        {
+            VirtualKeySequence = [0x60, 0x60],
+        };
+        await store.SaveAsync(configuration.ReplaceProfile(configuration.ActiveProfile.WithAdditionalButton(button)));
+
+        var loaded = await store.LoadAsync();
+
+        CollectionAssert.AreEqual(
+            new uint[] { 0x60, 0x60 },
+            loaded.ActiveProfile.AdditionalButtons[2].GetKeySequence().ToArray());
+    }
+
+    [TestMethod]
+    public async Task SaveAsync_AcceptsExistingAdditionalButtonsWithoutSequenceProperty()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        await store.SaveAsync(AppConfiguration.CreateDefault());
+        var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        foreach (var profile in root["configuration"]!["profiles"]!.AsArray())
+        {
+            foreach (var button in profile!["additionalButtons"]!.AsArray())
+            {
+                button!.AsObject().Remove("virtualKeySequence");
+            }
+        }
+
+        File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
+
+        var loaded = await store.LoadAsync();
+
+        await store.SaveAsync(loaded);
+        Assert.IsTrue(File.Exists(paths.ConfigurationFilePath));
+    }
+
+    [TestMethod]
     public async Task LoadAsync_WhenNoFileExists_UsesConfiguredDefaultProfileName()
     {
         using var store = new JsonConfigurationStore(

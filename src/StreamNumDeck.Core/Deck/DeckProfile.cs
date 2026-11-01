@@ -51,6 +51,9 @@ public sealed record DeckProfile
         if (AdditionalButtons.Length != AdditionalButtonSettings.Count
             || !AdditionalButtons.Select(static button => button.Slot).OrderBy(static slot => slot).SequenceEqual(Enumerable.Range(0, AdditionalButtonSettings.Count)))
             throw new ArgumentException("A profile must contain exactly eight additional buttons.", nameof(additionalButtons));
+        if (AdditionalButtons.Any(static button =>
+                button.GetKeySequence().Length > AdditionalButtonSettings.MaximumKeySequenceLength))
+            throw new ArgumentException("Additional button key sequences cannot exceed four keys.", nameof(additionalButtons));
     }
 
     public Guid Id { get; }

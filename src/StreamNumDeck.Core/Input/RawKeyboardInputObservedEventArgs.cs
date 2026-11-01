@@ -5,7 +5,9 @@ public sealed class RawKeyboardInputObservedEventArgs(
     uint virtualKeyCode,
     uint scanCode,
     bool isExtended,
-    bool isSelectedDevice) : EventArgs
+    bool isSelectedDevice,
+    bool isKeyDown = true,
+    CapturedKeyPress? capturedKeyPress = null) : EventArgs
 {
     public string DeviceId { get; } = Guard.NotNull(deviceId, nameof(deviceId));
 
@@ -16,4 +18,8 @@ public sealed class RawKeyboardInputObservedEventArgs(
     public bool IsExtended { get; } = isExtended;
 
     public bool IsSelectedDevice { get; } = isSelectedDevice;
+
+    public bool IsKeyDown { get; } = isKeyDown;
+
+    public CapturedKeyPress? CapturedKeyPress { get; } = capturedKeyPress;
 }

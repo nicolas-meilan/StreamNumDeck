@@ -268,7 +268,7 @@ public partial class SettingsWindow : Window
 
     private void ViewModel_RawKeyboardInputObserved(object? sender, RawKeyboardInputObservedEventArgs e)
     {
-        if (!keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
+        if (!e.IsKeyDown || !keyboardDiagnosticActive || Dispatcher.HasShutdownStarted)
         {
             return;
         }

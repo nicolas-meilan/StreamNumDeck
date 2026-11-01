@@ -528,15 +528,18 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ReplaceProfiles(configuration, profileId);
     }
 
-    public async Task UpdateAdditionalButtonAsync(int slot, uint? virtualKeyCode = null, KeyAssignment? assignment = null)
+    public async Task UpdateAdditionalButtonAsync(
+        int slot,
+        IReadOnlyList<uint>? virtualKeySequence = null,
+        KeyAssignment? assignment = null)
     {
         var profileId = SelectedProfile?.Id ?? throw new InvalidOperationException("No profile is selected.");
         var configuration = await configurationService.UpdateAsync(current =>
         {
             var profile = current.Profiles.Single(candidate => candidate.Id == profileId);
             var button = profile.AdditionalButtons[slot];
-            if (virtualKeyCode.HasValue || assignment is null)
-                button = button.WithKey(virtualKeyCode);
+            if (virtualKeySequence is not null)
+                button = button.WithKeySequence(virtualKeySequence);
             if (assignment is not null)
                 button = button.WithAssignment(assignment);
             return current.ReplaceProfile(profile.WithAdditionalButton(button));
@@ -619,7 +622,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         foreach (var tile in AdditionalButtons)
         {
             var button = SelectedProfile.AdditionalButtons[tile.Slot];
-            tile.Update(button.VirtualKeyCode, button.Assignment, iconAssetStore);
+            tile.Update(button.GetKeySequence(), button.Assignment, iconAssetStore);
         }
     }
 

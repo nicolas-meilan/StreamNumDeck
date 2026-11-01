@@ -258,7 +258,7 @@ public partial class MainWindow : Window
     {
         if (sender is not Button button || !TryGetSlot(button.Tag, out var slot) || viewModel.SelectedProfile is not DeckProfile profile) return;
         var config = profile.AdditionalButtons[slot];
-        if (config.VirtualKeyCode is null)
+        if (!config.HasKeySequence)
         {
             var capture = new AdditionalKeyCaptureWindow { Owner = this };
             var assigned = false;
@@ -267,7 +267,7 @@ public partial class MainWindow : Window
             {
                 if (capture.ShowDialog() == true)
                 {
-                    await viewModel.UpdateAdditionalButtonAsync(slot, capture.VirtualKeyCode);
+                    await viewModel.UpdateAdditionalButtonAsync(slot, capture.VirtualKeySequence);
                     assigned = true;
                 }
             }
@@ -301,14 +301,14 @@ public partial class MainWindow : Window
         viewModel.SetAdditionalKeyCaptureMode(true);
         try
         {
-            if (capture.ShowDialog() == true) await viewModel.UpdateAdditionalButtonAsync(slot, capture.VirtualKeyCode);
+            if (capture.ShowDialog() == true) await viewModel.UpdateAdditionalButtonAsync(slot, capture.VirtualKeySequence);
         }
         finally { viewModel.SetAdditionalKeyCaptureMode(false); }
     }
 
     private async void AdditionalButtonClearKey_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.MenuItem item && TryGetSlot(item.Tag, out var slot)) await viewModel.UpdateAdditionalButtonAsync(slot, virtualKeyCode: null);
+        if (sender is System.Windows.Controls.MenuItem item && TryGetSlot(item.Tag, out var slot)) await viewModel.UpdateAdditionalButtonAsync(slot, virtualKeySequence: []);
     }
 
     private async void AdditionalButtonClearAction_Click(object sender, RoutedEventArgs e)

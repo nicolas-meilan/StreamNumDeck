@@ -378,15 +378,27 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
-            if (isDown)
-            {
-                KeyboardInputObserved?.Invoke(
-                    this,
-                    new KeyboardInputObservedEventArgs(
-                        input.VkCode,
-                        input.ScanCode,
-                        (input.Flags & LlkhfExtended) != 0));
-            }
+            var isExtended = (input.Flags & LlkhfExtended) != 0;
+            var hasTranslatedKey = KeyboardScanCodeTranslator.TryTranslate(
+                input.VkCode,
+                input.ScanCode,
+                isExtended,
+                out var translatedKey);
+            CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isDown
+                ? new CapturedKeyPress(
+                    translatedKey,
+                    numLockOn ? NumLockLayer.On : NumLockLayer.Off,
+                    DateTimeOffset.UtcNow,
+                    input.VkCode)
+                : null;
+            KeyboardInputObserved?.Invoke(
+                this,
+                new KeyboardInputObservedEventArgs(
+                    input.VkCode,
+                    input.ScanCode,
+                    isExtended,
+                    isDown,
+                    capturedKeyPress));
 
             UpdateModifierState(input.VkCode, isDown);
             if (HandleEmergencyPause(input.VkCode, isDown, isUp))
@@ -411,16 +423,12 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
-            var isExtended = (input.Flags & LlkhfExtended) != 0;
-            if (!KeyboardScanCodeTranslator.TryTranslate(
-                    input.VkCode,
-                    input.ScanCode,
-                    isExtended,
-                    out var key))
+            if (!hasTranslatedKey)
             {
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
+            var key = translatedKey;
             if (SelectedKeyboardDeviceId is { } selectedDeviceId)
             {
                 if (state is not KeyboardCaptureState.Running)
@@ -452,10 +460,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
 
             if (AddPressedKey(key))
             {
-                channel.Writer.TryWrite(new CapturedKeyPress(
-                    key,
-                    numLockOn ? NumLockLayer.On : NumLockLayer.Off,
-                    DateTimeOffset.UtcNow));
+                channel.Writer.TryWrite(capturedKeyPress!.Value);
             }
 
             return 1;
@@ -521,27 +526,35 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             deviceId,
             SelectedKeyboardDeviceId,
             StringComparison.OrdinalIgnoreCase);
-        if (isKeyDown)
-        {
-            RawKeyboardInputObserved?.Invoke(
-                this,
-                new RawKeyboardInputObservedEventArgs(
-                    deviceId,
-                    virtualKeyCode,
-                    scanCode,
-                    isExtended,
-                    isSelectedDevice));
-        }
-
-        if (!KeyboardScanCodeTranslator.TryTranslate(
+        var hasTranslatedKey = KeyboardScanCodeTranslator.TryTranslate(
+            virtualKeyCode,
+            scanCode,
+            isExtended,
+            out var translatedKey);
+        CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isSelectedDevice && isKeyDown
+            ? new CapturedKeyPress(
+                translatedKey,
+                numLockOn ? NumLockLayer.On : NumLockLayer.Off,
+                DateTimeOffset.UtcNow,
+                virtualKeyCode)
+            : null;
+        RawKeyboardInputObserved?.Invoke(
+            this,
+            new RawKeyboardInputObservedEventArgs(
+                deviceId,
                 virtualKeyCode,
                 scanCode,
                 isExtended,
-                out var key))
+                isSelectedDevice,
+                isKeyDown,
+                capturedKeyPress));
+
+        if (!hasTranslatedKey)
         {
             return;
         }
 
+        var key = translatedKey;
         if (!isSelectedDevice)
         {
             return;
@@ -553,10 +566,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 && CaptureTargets.Includes(key)
                 && AddPressedKey(key))
             {
-                channel.Writer.TryWrite(new CapturedKeyPress(
-                    key,
-                    numLockOn ? NumLockLayer.On : NumLockLayer.Off,
-                    DateTimeOffset.UtcNow));
+                channel.Writer.TryWrite(capturedKeyPress!.Value);
             }
         }
         else

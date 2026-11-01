@@ -28,13 +28,14 @@ public sealed class AdditionalButtonTileViewModel(int slot) : ObservableObject
     public Visibility GlyphVisibility { get => glyphVisibility; private set => SetProperty(ref glyphVisibility, value); }
     public Visibility CustomIconVisibility { get => customIconVisibility; private set => SetProperty(ref customIconVisibility, value); }
 
-    public void Update(uint? virtualKeyCode, KeyAssignment assignment, IIconAssetStore iconAssetStore)
+    public void Update(IReadOnlyList<uint> virtualKeySequence, KeyAssignment assignment, IIconAssetStore iconAssetStore)
     {
         Title = $"Button {Slot + 1}";
-        KeyLabel = virtualKeyCode is uint code
-            ? System.Windows.Input.KeyInterop.KeyFromVirtualKey((int)code).ToString()
+        KeyLabel = virtualKeySequence.Count > 0
+            ? string.Join(" + ", virtualKeySequence.Select(code =>
+                System.Windows.Input.KeyInterop.KeyFromVirtualKey((int)code).ToString()))
             : "No key assigned";
-        Label = virtualKeyCode is null ? "Assign a key" : assignment.Action is NoActionDefinition ? "Configure action" : assignment.Label;
+        Label = virtualKeySequence.Count == 0 ? "Assign a key" : assignment.Action is NoActionDefinition ? "Configure action" : assignment.Label;
         var icon = assignment.Icon;
         if (icon.Kind == IconKind.CustomAsset)
         {
