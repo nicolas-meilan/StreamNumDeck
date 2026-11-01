@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Channels;
@@ -38,6 +39,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             AllowSynchronousContinuations = false,
         });
     private readonly HashSet<DeckKey> pressedKeys = [];
+    private readonly Dictionary<string, HashSet<DeckKey>> rawPressedKeys = new(StringComparer.OrdinalIgnoreCase);
     private readonly LowLevelKeyboardProc hookCallback;
     private readonly Timer numLockMonitor;
     private WindowsRawInputKeyboardSource? rawInputSource;
@@ -55,6 +57,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private bool emergencyChordDown;
     private bool disposed;
     private volatile KeyboardCaptureState state = KeyboardCaptureState.Stopped;
+    private ImmutableHashSet<DeckKey> deviceSpecificKeys = ImmutableHashSet<DeckKey>.Empty;
+    private ImmutableHashSet<DeckKey> anyKeyboardKeys = ImmutableHashSet<DeckKey>.Empty;
 
     public WindowsKeyboardCaptureService()
     {
@@ -110,33 +114,61 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             }
 
             var previousDeviceId = SelectedKeyboardDeviceId;
-            if (state is not KeyboardCaptureState.Stopped)
+            Volatile.Write(ref selectedKeyboardDeviceId, deviceId);
+            try
             {
-                await StopRawInputSourceAsync().ConfigureAwait(false);
-                ClearPressedKeys();
-                Volatile.Write(ref selectedKeyboardDeviceId, deviceId);
-                if (deviceId is not null)
+                if (state is not KeyboardCaptureState.Stopped)
                 {
-                    try
-                    {
-                        await StartRawInputSourceAsync(deviceId, cancellationToken).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        Volatile.Write(ref selectedKeyboardDeviceId, previousDeviceId);
-                        if (previousDeviceId is not null)
-                        {
-                            await StartRawInputSourceAsync(previousDeviceId, CancellationToken.None)
-                                .ConfigureAwait(false);
-                        }
-
-                        throw;
-                    }
+                    await EnsureRawInputSourceAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
-            else
+            catch
             {
-                Volatile.Write(ref selectedKeyboardDeviceId, deviceId);
+                Volatile.Write(ref selectedKeyboardDeviceId, previousDeviceId);
+                await EnsureRawInputSourceAsync(CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+        }
+        finally
+        {
+            deviceGate.Release();
+        }
+    }
+
+    public async Task SetKeyboardRoutedKeysAsync(
+        IReadOnlyCollection<DeckKey> specificKeys,
+        IReadOnlyCollection<DeckKey> allKeyboardKeys,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        specificKeys = Guard.NotNull(specificKeys, nameof(specificKeys));
+        allKeyboardKeys = Guard.NotNull(allKeyboardKeys, nameof(allKeyboardKeys));
+        if (specificKeys.Concat(allKeyboardKeys).Any(key => !DeckKeyCatalog.AssignableKeys.Contains(key)))
+        {
+            throw new ArgumentOutOfRangeException(nameof(specificKeys), "Only assignable deck keys can use keyboard routing.");
+        }
+
+        await deviceGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var previousSpecificKeys = deviceSpecificKeys;
+            var previousAnyKeys = anyKeyboardKeys;
+            Volatile.Write(ref deviceSpecificKeys, specificKeys.ToImmutableHashSet());
+            Volatile.Write(ref anyKeyboardKeys, allKeyboardKeys.ToImmutableHashSet());
+            try
+            {
+                if (state is not KeyboardCaptureState.Stopped)
+                {
+                    await EnsureRawInputSourceAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                Volatile.Write(ref deviceSpecificKeys, previousSpecificKeys);
+                Volatile.Write(ref anyKeyboardKeys, previousAnyKeys);
+                await EnsureRawInputSourceAsync(CancellationToken.None).ConfigureAwait(false);
+                throw;
             }
         }
         finally
@@ -189,10 +221,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         await deviceGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
         try
         {
-            if (SelectedKeyboardDeviceId is { } deviceId)
-            {
-                await StartRawInputSourceAsync(deviceId, CancellationToken.None).ConfigureAwait(false);
-            }
+            await EnsureRawInputSourceAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
@@ -216,6 +245,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         try
         {
             await StopRawInputSourceAsync().ConfigureAwait(false);
+            ClearRawPressedKeys();
 
             Thread? thread;
             uint threadId;
@@ -436,8 +466,12 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                     return CallNextHookEx(hookHandle, code, wParam, lParam);
                 }
 
-                // Raw Input identifies the selected device and queues its action.
-                // The low-level hook has no device identity, so selected-device keys pass through.
+                return CallNextHookEx(hookHandle, code, wParam, lParam);
+            }
+
+            if (Volatile.Read(ref deviceSpecificKeys).Contains(key)
+                || Volatile.Read(ref anyKeyboardKeys).Contains(key))
+            {
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
@@ -484,7 +518,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     }
 
     private async Task StartRawInputSourceAsync(
-        string deviceId,
+        string? deviceId,
         CancellationToken cancellationToken)
     {
         var source = new WindowsRawInputKeyboardSource(deviceId, OnRawInputObserved);
@@ -499,6 +533,25 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             source.Faulted -= RawInputSource_Faulted;
             await source.DisposeAsync().ConfigureAwait(false);
             throw;
+        }
+    }
+
+    private async Task EnsureRawInputSourceAsync(CancellationToken cancellationToken)
+    {
+        var shouldObserveRawInput = SelectedKeyboardDeviceId is not null
+            || !Volatile.Read(ref deviceSpecificKeys).IsEmpty
+            || !Volatile.Read(ref anyKeyboardKeys).IsEmpty;
+        if (shouldObserveRawInput)
+        {
+            if (rawInputSource is null)
+            {
+                await StartRawInputSourceAsync(SelectedKeyboardDeviceId, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            await StopRawInputSourceAsync().ConfigureAwait(false);
+            ClearRawPressedKeys();
         }
     }
 
@@ -531,12 +584,22 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             scanCode,
             isExtended,
             out var translatedKey);
-        CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isSelectedDevice && isKeyDown
+        var isRoutedKey = hasTranslatedKey
+            && (Volatile.Read(ref deviceSpecificKeys).Contains(translatedKey)
+                || Volatile.Read(ref anyKeyboardKeys).Contains(translatedKey));
+        var isRepeat = hasTranslatedKey && (isKeyDown
+            ? isRoutedKey
+                && state is KeyboardCaptureState.Running
+                && CaptureTargets.Includes(translatedKey)
+                && UpdateRawPressedKey(deviceId, translatedKey, isKeyDown)
+            : UpdateRawPressedKey(deviceId, translatedKey, isKeyDown));
+        CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isKeyDown
             ? new CapturedKeyPress(
                 translatedKey,
                 numLockOn ? NumLockLayer.On : NumLockLayer.Off,
                 DateTimeOffset.UtcNow,
-                virtualKeyCode)
+                virtualKeyCode,
+                deviceId)
             : null;
         RawKeyboardInputObserved?.Invoke(
             this,
@@ -547,7 +610,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 isExtended,
                 isSelectedDevice,
                 isKeyDown,
-                capturedKeyPress));
+                capturedKeyPress,
+                isRepeat));
 
         if (!hasTranslatedKey)
         {
@@ -564,6 +628,9 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         {
             if (state is KeyboardCaptureState.Running
                 && CaptureTargets.Includes(key)
+                && !Volatile.Read(ref deviceSpecificKeys).Contains(key)
+                && !(SelectedKeyboardDeviceId is not null
+                    && Volatile.Read(ref anyKeyboardKeys).Contains(key))
                 && AddPressedKey(key))
             {
                 channel.Writer.TryWrite(capturedKeyPress!.Value);
@@ -572,6 +639,44 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         else
         {
             RemovePressedKey(key);
+        }
+    }
+
+    private bool UpdateRawPressedKey(string deviceId, DeckKey key, bool isKeyDown)
+    {
+        lock (pressedKeysGate)
+        {
+            if (!rawPressedKeys.TryGetValue(deviceId, out var keys))
+            {
+                if (!isKeyDown)
+                {
+                    return false;
+                }
+
+                keys = [];
+                rawPressedKeys.Add(deviceId, keys);
+            }
+
+            if (isKeyDown)
+            {
+                return !keys.Add(key);
+            }
+
+            keys.Remove(key);
+            if (keys.Count == 0)
+            {
+                rawPressedKeys.Remove(deviceId);
+            }
+
+            return false;
+        }
+    }
+
+    private void ClearRawPressedKeys()
+    {
+        lock (pressedKeysGate)
+        {
+            rawPressedKeys.Clear();
         }
     }
 

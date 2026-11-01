@@ -75,7 +75,7 @@ The physical `NumLock` key switches between two independent layers. That gives y
 
 Each key can have a label, a built-in symbol, one of the included color emoji, or your own image. Profiles have their own icons and can be switched from the side panel or the system tray.
 
-Captured keys are blocked globally by default. Select a keyboard in Settings → Keyboard, then enable **Identify the selected keyboard for this key** only on keys that should wait up to 10 ms and be blocked only when they come from that device. Other keyboards and timeouts pass through. Closely timed presses of the same key on different keyboards may be misidentified.
+Captured keys are blocked globally by default. In Settings → Keyboard, you can select a global keyboard; its captured keys trigger actions but pass through to the focused app. For an individual deck key, choose the global setting, a specific keyboard, or **Any keyboard (ignore device)**. Per-key choices take priority over the global setting; keyboard-specific and any-keyboard choices pass through and type into the focused app.
 
 ### Download
 

@@ -97,7 +97,7 @@
     <value>Intercept NumPad keys</value>
   </data>
   <data name="KeyboardDevice_Select.Label" xml:space="preserve">
-    <value>Keyboard source</value>
+    <value>Global keyboard source</value>
   </data>
   <data name="KeyboardDevice_All.Label" xml:space="preserve">
     <value>All keyboards (global capture)</value>
@@ -106,7 +106,22 @@
     <value>Refresh</value>
   </data>
   <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
-    <value>With a keyboard selected, its keys trigger actions and pass through to the focused app. Without a selection, captured keys are blocked globally.</value>
+    <value>Warning: when a keyboard is selected, its captured keys trigger actions but cannot be blocked, so they also type into the focused app. Without a selection, captured keys are blocked globally. A per-key keyboard selection overrides this setting.</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Use global keyboard setting</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Any keyboard (ignore device)</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Keyboard for this key</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Warning: this key only responds to the selected keyboard. It cannot be blocked, so each press also types into the focused app. This overrides the global keyboard setting.</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Warning: this key responds to every keyboard, regardless of the global keyboard selection. It cannot be blocked, so each press also types into the focused app.</value>
   </data>
   <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
     <value>Disconnected keyboard: {0}</value>

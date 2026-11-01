@@ -7,7 +7,8 @@ public sealed class RawKeyboardInputObservedEventArgs(
     bool isExtended,
     bool isSelectedDevice,
     bool isKeyDown = true,
-    CapturedKeyPress? capturedKeyPress = null) : EventArgs
+    CapturedKeyPress? capturedKeyPress = null,
+    bool isRepeat = false) : EventArgs
 {
     public string DeviceId { get; } = Guard.NotNull(deviceId, nameof(deviceId));
 
@@ -22,4 +23,6 @@ public sealed class RawKeyboardInputObservedEventArgs(
     public bool IsKeyDown { get; } = isKeyDown;
 
     public CapturedKeyPress? CapturedKeyPress { get; } = capturedKeyPress;
+
+    public bool IsRepeat { get; } = isRepeat;
 }

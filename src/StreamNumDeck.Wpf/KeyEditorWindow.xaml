@@ -213,6 +213,21 @@
                     <Border Height="1" Background="#414141" Margin="0,20,0,18" />
                     </StackPanel>
 
+                    <StackPanel x:Name="KeyboardSelectionSection" Margin="0,0,0,16">
+                        <TextBlock Text="{localization:Loc Editor_KeyboardDevice.Label, Fallback=Keyboard for this key}"
+                                   FontSize="13" FontWeight="SemiBold" />
+                        <ComboBox x:Name="KeyboardDeviceComboBox" Height="34" Margin="0,7,0,0"
+                                  DisplayMemberPath="DisplayName" SelectedValuePath="DeviceId"
+                                  SelectionChanged="KeyboardDeviceComboBox_SelectionChanged" />
+                        <Border x:Name="KeyboardDeviceWarning" Visibility="Collapsed"
+                                Background="#332D20" BorderBrush="#8A7040" BorderThickness="1"
+                                CornerRadius="7" Padding="10" Margin="0,8,0,0">
+                            <TextBlock x:Name="KeyboardDeviceWarningText"
+                                       Text="{localization:Loc Editor_KeyboardDeviceWarning.Text, Fallback=This key only responds to the selected keyboard. It cannot be blocked. Each press also types into the focused app. This overrides the global keyboard setting.}"
+                                       Foreground="#E5C47B" FontSize="11" TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
+
                     <TextBlock Text="{localization:Loc Editor_ActionSection.Text, Fallback=Action}"
                                FontSize="16" FontWeight="SemiBold" />
                     <TextBlock Text="{localization:Loc Editor_ActionGroup.Header, Fallback=Choose a group and an action}"
@@ -455,7 +470,7 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="{localization:Loc Common_Cancel, Fallback=Cancel}"
                                 MinWidth="84" Margin="0,0,8,0" IsCancel="True" />
-                        <Button Content="{localization:Loc Common_Save, Fallback=Save}"
+                        <Button x:Name="SaveButton" Content="{localization:Loc Common_Save, Fallback=Save}"
                                 MinWidth="88" IsDefault="True" Click="Save_Click" />
                     </StackPanel>
                 </Grid>

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using StreamNumDeck.Core.Actions;
 using StreamNumDeck.Core.Configuration;
 using StreamNumDeck.Core.Deck;
@@ -5,10 +6,7 @@ using StreamNumDeck.Core.Input;
 
 namespace StreamNumDeck.Core.Execution;
 
-public sealed class DeckRuntimeService(
-    ConfigurationService configurationService,
-    IKeyboardCaptureService keyboardCapture,
-    ActionDispatcher actionDispatcher) : IAsyncDisposable
+public sealed class DeckRuntimeService : IAsyncDisposable
 {
     private static readonly TimeSpan AdditionalButtonSequenceTimeout = TimeSpan.FromMilliseconds(50);
     private readonly SemaphoreSlim lifecycleGate = new(1, 1);
@@ -24,8 +22,28 @@ public sealed class DeckRuntimeService(
     private CancellationTokenSource? processingCancellation;
     private CancellationTokenSource? additionalKeySequenceTimeout;
     private Task? processingTask;
+    private readonly ConfigurationService configurationService;
+    private readonly IKeyboardCaptureService keyboardCapture;
+    private readonly ActionDispatcher actionDispatcher;
+    private EventHandler<KeyboardCaptureErrorEventArgs>? captureError;
+    private ImmutableDictionary<DeckKey, string> deviceSpecificKeyboardIds =
+        ImmutableDictionary<DeckKey, string>.Empty;
+    private ImmutableHashSet<DeckKey> anyKeyboardKeys = ImmutableHashSet<DeckKey>.Empty;
     private bool disposed;
     private int additionalKeyCaptureMode;
+
+    public DeckRuntimeService(
+        ConfigurationService configurationService,
+        IKeyboardCaptureService keyboardCapture,
+        ActionDispatcher actionDispatcher)
+    {
+        this.configurationService = Guard.NotNull(configurationService, nameof(configurationService));
+        this.keyboardCapture = Guard.NotNull(keyboardCapture, nameof(keyboardCapture));
+        this.actionDispatcher = Guard.NotNull(actionDispatcher, nameof(actionDispatcher));
+        this.configurationService.Changed += ConfigurationService_Changed;
+        this.keyboardCapture.NumLockStateChanged += KeyboardCapture_NumLockStateChanged;
+        this.keyboardCapture.CaptureError += KeyboardCapture_CaptureError;
+    }
 
     public KeyboardCaptureState CaptureState => keyboardCapture.State;
 
@@ -59,8 +77,8 @@ public sealed class DeckRuntimeService(
 
     public event EventHandler<KeyboardCaptureErrorEventArgs>? CaptureError
     {
-        add => keyboardCapture.CaptureError += value;
-        remove => keyboardCapture.CaptureError -= value;
+        add => captureError += value;
+        remove => captureError -= value;
     }
 
     public event EventHandler<ActionExecutionFailedEventArgs>? ActionExecutionFailed;
@@ -86,6 +104,12 @@ public sealed class DeckRuntimeService(
         CancellationToken cancellationToken = default) =>
         keyboardCapture.SetSelectedKeyboardDeviceAsync(deviceId, cancellationToken);
 
+    public Task SetKeyboardRoutedKeysAsync(
+        IReadOnlyCollection<DeckKey> deviceSpecificKeys,
+        IReadOnlyCollection<DeckKey> anyKeyboardKeys,
+        CancellationToken cancellationToken = default) =>
+        keyboardCapture.SetKeyboardRoutedKeysAsync(deviceSpecificKeys, anyKeyboardKeys, cancellationToken);
+
     public Task SetDeviceIdentificationKeysAsync(
         IReadOnlyCollection<DeckKey> numLockOffKeys,
         IReadOnlyCollection<DeckKey> numLockOnKeys,
@@ -104,6 +128,8 @@ public sealed class DeckRuntimeService(
                 return;
             }
 
+            var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(false);
+            await UpdateDeviceSpecificKeysAsync(configuration, cancellationToken).ConfigureAwait(false);
             await keyboardCapture.StartAsync(cancellationToken).ConfigureAwait(false);
             keyboardCapture.KeyboardInputObserved += KeyboardCapture_KeyboardInputObserved;
             keyboardCapture.RawKeyboardInputObserved += KeyboardCapture_RawKeyboardInputObserved;
@@ -169,6 +195,9 @@ public sealed class DeckRuntimeService(
         }
 
         await StopAsync().ConfigureAwait(false);
+        configurationService.Changed -= ConfigurationService_Changed;
+        keyboardCapture.NumLockStateChanged -= KeyboardCapture_NumLockStateChanged;
+        keyboardCapture.CaptureError -= KeyboardCapture_CaptureError;
         await keyboardCapture.DisposeAsync().ConfigureAwait(false);
         foreach (var gate in actionGates.Values)
         {
@@ -231,7 +260,83 @@ public sealed class DeckRuntimeService(
     private async void KeyboardCapture_RawKeyboardInputObserved(object? sender, RawKeyboardInputObservedEventArgs e)
     {
         var cancellation = processingCancellation;
-        if (keyboardCapture.SelectedKeyboardDeviceId is null || !e.IsSelectedDevice || cancellation is null)
+        if (cancellation is null)
+        {
+            return;
+        }
+
+        if (e.CapturedKeyPress is CapturedKeyPress keyPress
+            && e.IsKeyDown
+            && !e.IsRepeat)
+        {
+            var specificKeyboardIds = Volatile.Read(ref deviceSpecificKeyboardIds);
+            if (specificKeyboardIds.TryGetValue(keyPress.Key, out var selectedDeviceId))
+            {
+                if (!string.Equals(selectedDeviceId, e.DeviceId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                try
+                {
+                    var configuration = await configurationService.GetAsync(cancellation.Token).ConfigureAwait(false);
+                    var assignment = configuration.ActiveProfile
+                        .GetLayer(keyPress.Layer)
+                        .GetAssignment(keyPress.Key);
+                    if (string.Equals(
+                        assignment.KeyboardDeviceId,
+                        e.DeviceId,
+                        StringComparison.OrdinalIgnoreCase)
+                        && keyboardCapture.State is KeyboardCaptureState.Running
+                        && keyboardCapture.CaptureTargets.Includes(keyPress.Key)
+                        && assignment.Action is not NoActionDefinition)
+                    {
+                        TrackAction(ExecuteActionAsync(keyPress.Key, assignment.Action, cancellation.Token));
+                    }
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+                catch (Exception exception)
+                {
+                    ActionExecutionFailed?.Invoke(
+                        this,
+                        new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
+                    return;
+                }
+
+                return;
+            }
+
+            if (Volatile.Read(ref anyKeyboardKeys).Contains(keyPress.Key))
+            {
+                if (keyboardCapture.State is KeyboardCaptureState.Running
+                    && keyboardCapture.CaptureTargets.Includes(keyPress.Key))
+                {
+                    try
+                    {
+                        var configuration = await configurationService.GetAsync(cancellation.Token).ConfigureAwait(false);
+                        var assignment = configuration.ActiveProfile
+                            .GetLayer(keyPress.Layer)
+                            .GetAssignment(keyPress.Key);
+                        if (assignment.UseAnyKeyboard && assignment.Action is not NoActionDefinition)
+                        {
+                            TrackAction(ExecuteActionAsync(keyPress.Key, assignment.Action, cancellation.Token));
+                        }
+                    }
+                    catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+                    catch (Exception exception)
+                    {
+                        ActionExecutionFailed?.Invoke(
+                            this,
+                            new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
+                        return;
+                    }
+                }
+
+                return;
+            }
+        }
+
+        if (!e.IsSelectedDevice)
         {
             return;
         }
@@ -272,6 +377,55 @@ public sealed class DeckRuntimeService(
         {
             ActionExecutionFailed?.Invoke(this, new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
         }
+    }
+
+    private async void ConfigurationService_Changed(object? sender, ConfigurationChangedEventArgs e)
+    {
+        try
+        {
+            await UpdateDeviceSpecificKeysAsync(e.Configuration).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            captureError?.Invoke(this, new KeyboardCaptureErrorEventArgs(exception));
+        }
+    }
+
+    private async void KeyboardCapture_NumLockStateChanged(object? sender, NumLockStateChangedEventArgs e)
+    {
+        try
+        {
+            var configuration = await configurationService.GetAsync().ConfigureAwait(false);
+            await UpdateDeviceSpecificKeysAsync(configuration).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            captureError?.Invoke(this, new KeyboardCaptureErrorEventArgs(exception));
+        }
+    }
+
+    private void KeyboardCapture_CaptureError(object? sender, KeyboardCaptureErrorEventArgs e) =>
+        captureError?.Invoke(this, e);
+
+    private Task UpdateDeviceSpecificKeysAsync(
+        AppConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var layer = keyboardCapture.IsNumLockOn ? NumLockLayer.On : NumLockLayer.Off;
+        var mappings = configuration.ActiveProfile
+            .GetLayer(layer)
+            .Assignments
+            .Where(static assignment => !string.IsNullOrWhiteSpace(assignment.Value.KeyboardDeviceId))
+            .ToImmutableDictionary(static assignment => assignment.Key, static assignment => assignment.Value.KeyboardDeviceId!);
+        var anyKeys = configuration.ActiveProfile
+            .GetLayer(layer)
+            .Assignments
+            .Where(static assignment => assignment.Value.UseAnyKeyboard)
+            .Select(static assignment => assignment.Key)
+            .ToImmutableHashSet();
+        Volatile.Write(ref deviceSpecificKeyboardIds, mappings);
+        Volatile.Write(ref anyKeyboardKeys, anyKeys);
+        return keyboardCapture.SetKeyboardRoutedKeysAsync(mappings.Keys.ToArray(), anyKeys.ToArray(), cancellationToken);
     }
 
     private async Task HandleAdditionalButtonInputAsync(

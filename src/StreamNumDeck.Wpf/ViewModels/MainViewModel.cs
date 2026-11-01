@@ -161,12 +161,20 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         await ApplyCaptureTargetsAsync(configuration.Settings, cancellationToken).ConfigureAwait(true);
         if (configuration.Settings.EnableCaptureOnStartup)
         {
+            var hasSpecificKeyboardAssignment = new[]
+                {
+                    configuration.ActiveProfile.NumLockOff,
+                    configuration.ActiveProfile.NumLockOn,
+                }
+                .SelectMany(static layer => layer.Assignments.Values)
+                .Any(static assignment => !string.IsNullOrWhiteSpace(assignment.KeyboardDeviceId));
             try
             {
                 await runtimeService.StartAsync(cancellationToken).ConfigureAwait(true);
             }
             catch (Exception exception) when (
-                !string.IsNullOrWhiteSpace(configuration.Settings.SelectedKeyboardDeviceId)
+                (!string.IsNullOrWhiteSpace(configuration.Settings.SelectedKeyboardDeviceId)
+                    || hasSpecificKeyboardAssignment)
                 && !cancellationToken.IsCancellationRequested)
             {
                 ReportKeyboardCaptureError(exception);

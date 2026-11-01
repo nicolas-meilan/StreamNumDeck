@@ -254,8 +254,8 @@
                                         Content="{localization:Loc KeyboardDevice_Refresh.Content, Fallback=Refresh}"
                                         Click="RefreshKeyboardDevices_Click" />
                             </Grid>
-                            <TextBlock Text="{localization:Loc KeyboardDevice_SelectHint.Text, Fallback=Selected keyboard keys pass through to the focused app. Without a selection captured keys are blocked globally}"
-                                       FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"
+                            <TextBlock Text="{localization:Loc KeyboardDevice_SelectHint.Text, Fallback=Warning: selected keyboard keys trigger actions and also type into the focused app because they cannot be blocked. Without a selection captured keys are blocked globally. Per-key selection overrides this setting.}"
+                                       FontSize="11" Foreground="#E5C47B"
                                        TextWrapping="Wrap" Margin="0,0,0,8" />
                             <Grid Margin="0,5">
                                 <TextBlock Text="{localization:Loc Capture_NumPadHint, Fallback=Intercept numeric keypad keys}" VerticalAlignment="Center" />

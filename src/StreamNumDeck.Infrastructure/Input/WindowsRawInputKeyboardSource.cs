@@ -19,7 +19,7 @@ internal sealed class WindowsRawInputKeyboardSource : IAsyncDisposable
     private const uint PmNoRemove = 0;
     private static readonly nint HwndMessage = new IntPtr(-3);
 
-    private readonly string selectedDeviceId;
+    private readonly string? selectedDeviceId;
     private readonly Action<string, uint, uint, bool, bool> inputObserved;
     private readonly string windowClassName = $"StreamNumDeck.RawInput.{Guid.NewGuid():N}";
     private readonly WndProc windowProcedure;
@@ -33,7 +33,7 @@ internal sealed class WindowsRawInputKeyboardSource : IAsyncDisposable
     private bool rawInputRegistered;
 
     public WindowsRawInputKeyboardSource(
-        string selectedDeviceId,
+        string? selectedDeviceId,
         Action<string, uint, uint, bool, bool> inputObserved)
     {
         this.selectedDeviceId = selectedDeviceId;
@@ -156,7 +156,8 @@ internal sealed class WindowsRawInputKeyboardSource : IAsyncDisposable
             }
 
             RefreshDevicePaths();
-            if (!devicePaths.Values.Contains(selectedDeviceId, StringComparer.OrdinalIgnoreCase))
+            if (selectedDeviceId is not null
+                && !devicePaths.Values.Contains(selectedDeviceId, StringComparer.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("The selected keyboard is not currently connected.");
             }

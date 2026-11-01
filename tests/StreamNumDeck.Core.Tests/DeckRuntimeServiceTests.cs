@@ -264,6 +264,94 @@ public sealed class DeckRuntimeServiceTests
     }
 
     [TestMethod]
+    public async Task PerKeyKeyboard_OverridesGlobalKeyboardAndRunsOnlyForMatchingDevice()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var assignment = new KeyAssignment(
+            "Specific keyboard",
+            IconReference.BuiltIn("play"),
+            new OpenPathActionDefinition("specific"))
+        {
+            KeyboardDeviceId = "specific-keyboard",
+        };
+        var profile = configuration.ActiveProfile.WithAssignment(NumLockLayer.Off, DeckKey.Numpad0, assignment);
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration.ReplaceProfile(profile)));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync("global-keyboard");
+            await runtime.StartAsync();
+
+            CollectionAssert.AreEqual(new[] { DeckKey.Numpad0 }, capture.DeviceSpecificKeys.ToArray());
+            capture.PublishDeviceKey(DeckKey.Numpad0, "global-keyboard", isSelectedDevice: true);
+            await Task.Delay(50);
+            Assert.AreEqual(0, executor.ExecutedPaths.Count, "The per-key selection must override the global keyboard.");
+
+            capture.PublishDeviceKey(DeckKey.Numpad0, "specific-keyboard", isSelectedDevice: false);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 1);
+            capture.PublishDeviceKey(
+                DeckKey.Numpad0,
+                "specific-keyboard",
+                isSelectedDevice: false,
+                isRepeat: true);
+            await Task.Delay(50);
+
+            CollectionAssert.AreEqual(new[] { "specific" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task PerKeyAnyKeyboard_IgnoresGlobalKeyboardSelection()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var assignment = new KeyAssignment(
+            "Any keyboard",
+            IconReference.BuiltIn("play"),
+            new OpenPathActionDefinition("any"))
+        {
+            UseAnyKeyboard = true,
+        };
+        var profile = configuration.ActiveProfile.WithAssignment(NumLockLayer.Off, DeckKey.Numpad0, assignment);
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration.ReplaceProfile(profile)));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync("global-keyboard");
+            await runtime.StartAsync();
+
+            CollectionAssert.AreEqual(new[] { DeckKey.Numpad0 }, capture.AnyKeyboardKeys.ToArray());
+            capture.PublishDeviceKey(DeckKey.Numpad0, "global-keyboard", isSelectedDevice: true);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 1);
+            capture.PublishDeviceKey(DeckKey.Numpad0, "other-keyboard", isSelectedDevice: false);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 2);
+
+            CollectionAssert.AreEqual(new[] { "any", "any" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task SetDeviceIdentificationKeys_IsForwardedToCaptureService()
     {
         using var configurationService = new ConfigurationService(
@@ -385,6 +473,10 @@ public sealed class DeckRuntimeServiceTests
 
         public IReadOnlyCollection<DeckKey> DeviceIdentificationKeysOn { get; private set; } = [];
 
+        public IReadOnlyCollection<DeckKey> DeviceSpecificKeys { get; private set; } = [];
+
+        public IReadOnlyCollection<DeckKey> AnyKeyboardKeys { get; private set; } = [];
+
         public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
         public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
@@ -430,6 +522,16 @@ public sealed class DeckRuntimeServiceTests
             CancellationToken cancellationToken = default)
         {
             SelectedKeyboardDeviceId = deviceId;
+            return Task.CompletedTask;
+        }
+
+        public Task SetKeyboardRoutedKeysAsync(
+            IReadOnlyCollection<DeckKey> deviceSpecificKeys,
+            IReadOnlyCollection<DeckKey> anyKeyboardKeys,
+            CancellationToken cancellationToken = default)
+        {
+            DeviceSpecificKeys = deviceSpecificKeys.ToArray();
+            AnyKeyboardKeys = anyKeyboardKeys.ToArray();
             return Task.CompletedTask;
         }
 
@@ -486,7 +588,38 @@ public sealed class DeckRuntimeServiceTests
                     isSelectedDevice,
                     isKeyDown,
                     capturedKeyPress));
-            if (capturedKeyPress is CapturedKeyPress keyPress)
+            if (capturedKeyPress is CapturedKeyPress keyPress
+                && !DeviceSpecificKeys.Contains(keyPress.Key))
+            {
+                channel.Writer.TryWrite(keyPress);
+            }
+        }
+
+        public void PublishDeviceKey(
+            DeckKey key,
+            string deviceId,
+            bool isSelectedDevice,
+            bool isRepeat = false)
+        {
+            var keyPress = new CapturedKeyPress(
+                key,
+                NumLockLayer.Off,
+                DateTimeOffset.UtcNow,
+                DeviceId: deviceId);
+            RawKeyboardInputObserved?.Invoke(
+                this,
+                new RawKeyboardInputObservedEventArgs(
+                    deviceId,
+                    0x60,
+                    0,
+                    false,
+                    isSelectedDevice,
+                    capturedKeyPress: keyPress,
+                    isRepeat: isRepeat));
+
+            if (isSelectedDevice
+                && !DeviceSpecificKeys.Contains(key)
+                && !AnyKeyboardKeys.Contains(key))
             {
                 channel.Writer.TryWrite(keyPress);
             }

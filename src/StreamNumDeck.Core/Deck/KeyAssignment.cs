@@ -40,6 +40,10 @@ public sealed record KeyAssignment
 
     public bool IdentifySelectedKeyboardBeforeBlocking { get; init; }
 
+    public string? KeyboardDeviceId { get; init; }
+
+    public bool UseAnyKeyboard { get; init; }
+
     public static KeyAssignment Empty { get; } = new(
         string.Empty,
         IconReference.BuiltIn("square"),

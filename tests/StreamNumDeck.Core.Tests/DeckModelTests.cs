@@ -85,10 +85,15 @@ public sealed class DeckModelTests
             new OpenPathActionDefinition("path"))
         {
             IdentifySelectedKeyboardBeforeBlocking = true,
+            KeyboardDeviceId = "selected-keyboard",
         };
 
         Assert.IsFalse(KeyAssignment.Empty.IdentifySelectedKeyboardBeforeBlocking);
         Assert.IsTrue(assignment.IdentifySelectedKeyboardBeforeBlocking);
+        Assert.AreEqual("selected-keyboard", assignment.KeyboardDeviceId);
+        var anyKeyboardAssignment = assignment with { KeyboardDeviceId = null, UseAnyKeyboard = true };
+        Assert.IsTrue(anyKeyboardAssignment.UseAnyKeyboard);
+        Assert.IsNull(anyKeyboardAssignment.KeyboardDeviceId);
     }
 
     [TestMethod]

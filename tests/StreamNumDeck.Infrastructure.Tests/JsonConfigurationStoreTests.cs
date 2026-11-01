@@ -149,11 +149,22 @@ public sealed class JsonConfigurationStoreTests
             new PlaySoundActionDefinition("C:\\Sounds\\applause.wav", 73, SoundPlaybackBehavior.StopOthers))
         {
             IdentifySelectedKeyboardBeforeBlocking = true,
+            KeyboardDeviceId = @"\\?\HID#Keyboard#Specific",
         };
         var updatedProfile = configuration.ActiveProfile.WithAssignment(
             NumLockLayer.On,
             DeckKey.NumpadAdd,
             assignment);
+        updatedProfile = updatedProfile.WithAssignment(
+            NumLockLayer.On,
+            DeckKey.NumpadMultiply,
+            new KeyAssignment(
+                "Any keyboard",
+                IconReference.BuiltIn("play"),
+                new OpenPathActionDefinition("any"))
+            {
+                UseAnyKeyboard = true,
+            });
         var updatedConfiguration = configuration.ReplaceProfile(updatedProfile);
 
         await store.SaveAsync(updatedConfiguration);
@@ -167,6 +178,10 @@ public sealed class JsonConfigurationStoreTests
         Assert.AreEqual(73, soundAction.Volume);
         Assert.AreEqual(SoundPlaybackBehavior.StopOthers, soundAction.PlaybackBehavior);
         Assert.IsTrue(loadedAssignment.IdentifySelectedKeyboardBeforeBlocking);
+        Assert.AreEqual(@"\\?\HID#Keyboard#Specific", loadedAssignment.KeyboardDeviceId);
+        var anyKeyboardAssignment = loaded.ActiveProfile.NumLockOn.GetAssignment(DeckKey.NumpadMultiply);
+        Assert.IsTrue(anyKeyboardAssignment.UseAnyKeyboard);
+        Assert.IsNull(anyKeyboardAssignment.KeyboardDeviceId);
     }
 
     [TestMethod]

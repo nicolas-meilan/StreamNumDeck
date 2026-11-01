@@ -6,7 +6,8 @@ public readonly record struct CapturedKeyPress(
     DeckKey Key,
     NumLockLayer Layer,
     DateTimeOffset Timestamp,
-    uint? VirtualKeyCode = null);
+    uint? VirtualKeyCode = null,
+    string? DeviceId = null);
 
 public enum KeyboardCaptureState
 {

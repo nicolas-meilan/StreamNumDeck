@@ -8,6 +8,7 @@ using System.Windows.Media.Imaging;
 using StreamNumDeck.Core.Actions;
 using StreamNumDeck.Core.Deck;
 using StreamNumDeck.Core.Icons;
+using StreamNumDeck.Core.Input;
 using StreamNumDeck.Wpf.Localization;
 using StreamNumDeck.Wpf.Presentation;
 using StreamNumDeck.Core.Audio;
@@ -19,6 +20,7 @@ namespace StreamNumDeck.Wpf;
 
 public partial class KeyEditorWindow : Window
 {
+    private const string AnyKeyboardSelection = "\0any-keyboard";
     private static readonly IReadOnlyList<ActionGroupOption> ActionGroups = new[]
     {
         new ActionGroupOption("none", AppStrings.Get("ActionGroup_None", "None"), "\uE710"),
@@ -80,12 +82,16 @@ public partial class KeyEditorWindow : Window
     private readonly Func<CancellationToken, Task<bool>> isVTubeStudioAuthorized;
     private readonly Func<Window, bool> openVTubeStudioSettings;
     private readonly Func<CancellationToken, Task<IReadOnlyList<AudioApplication>>> getAudioApplications;
+    private readonly Func<CancellationToken, Task<IReadOnlyList<KeyboardDeviceInfo>>>? getAvailableKeyboards;
     private readonly KeyAssignment otherLayerAssignment;
     private readonly Func<string, int, SoundPlaybackBehavior, CancellationToken, Task> previewSound;
     private readonly Func<CancellationToken, Task> stopSounds;
     private readonly ObservableCollection<AutomationStepItem> automationSteps = new();
     private readonly bool actionOnlyMode;
     private readonly bool allowAppearanceEditing;
+    private IReadOnlyList<KeyboardDeviceInfo> availableKeyboards = [];
+    private string? keyboardDeviceId;
+    private bool currentUsesAnyKeyboard;
     private CancellationTokenSource? parameterSuggestionsCancellation;
     private int parameterSuggestionsRequestVersion;
     private bool actionGroupSelectionReady;
@@ -107,7 +113,8 @@ public partial class KeyEditorWindow : Window
         Func<string, int, SoundPlaybackBehavior, CancellationToken, Task> previewSound,
         Func<CancellationToken, Task> stopSounds,
         bool actionOnlyMode = false,
-        bool allowAppearanceEditing = false)
+        bool allowAppearanceEditing = false,
+        Func<CancellationToken, Task<IReadOnlyList<KeyboardDeviceInfo>>>? getAvailableKeyboards = null)
     {
         this.importIcon = importIcon;
         this.resolveIconPath = resolveIconPath;
@@ -119,9 +126,13 @@ public partial class KeyEditorWindow : Window
         this.getAudioApplications = getAudioApplications;
         this.previewSound = previewSound;
         this.stopSounds = stopSounds;
+        this.getAvailableKeyboards = getAvailableKeyboards;
         this.actionOnlyMode = actionOnlyMode;
         this.allowAppearanceEditing = allowAppearanceEditing;
         InitializeComponent();
+        KeyboardSelectionSection.Visibility = actionOnlyMode || getAvailableKeyboards is null
+            ? Visibility.Collapsed
+            : Visibility.Visible;
         var isNumLockOn = System.Windows.Input.Keyboard.IsKeyToggled(System.Windows.Input.Key.NumLock);
         var currentLayerName = AppStrings.Get(isNumLockOn ? "Common_On" : "Common_Off", isNumLockOn ? "on" : "off");
         var otherLayerName = AppStrings.Get(isNumLockOn ? "Common_Off" : "Common_On", isNumLockOn ? "off" : "on");
@@ -220,6 +231,46 @@ public partial class KeyEditorWindow : Window
     private async void KeyEditorWindow_Loaded(object sender, RoutedEventArgs e)
     {
         Loaded -= KeyEditorWindow_Loaded;
+        if (KeyboardSelectionSection.Visibility is Visibility.Visible)
+        {
+            try
+            {
+                availableKeyboards = await getAvailableKeyboards!(CancellationToken.None);
+                var options = new List<KeyboardDeviceOption>
+                {
+                    new(
+                        string.Empty,
+                        AppStrings.Get("KeyboardDevice_Inherit.Label", "Use global keyboard setting")),
+                    new(
+                        AnyKeyboardSelection,
+                        AppStrings.Get("KeyboardDevice_Any.Label", "Any keyboard (ignore device)")),
+                };
+                options.AddRange(availableKeyboards.Select(device =>
+                    new KeyboardDeviceOption(device.DeviceId, device.DisplayName)));
+                var disconnectedDeviceId = keyboardDeviceId;
+                if (disconnectedDeviceId is { Length: > 0 }
+                    && !availableKeyboards.Any(device => string.Equals(
+                        device.DeviceId,
+                        disconnectedDeviceId,
+                        StringComparison.OrdinalIgnoreCase)))
+                {
+                    options.Add(new KeyboardDeviceOption(
+                        disconnectedDeviceId,
+                        AppStrings.Format("KeyboardDevice_Disconnected.Label", disconnectedDeviceId)));
+                }
+
+                KeyboardDeviceComboBox.ItemsSource = options;
+                KeyboardDeviceComboBox.SelectedValue = keyboardDeviceId
+                    ?? (keyboardDeviceId is null && currentUsesAnyKeyboard ? AnyKeyboardSelection : string.Empty);
+                UpdateKeyboardDeviceWarning();
+            }
+            catch (Exception exception)
+            {
+                ShowValidation("KeyboardDevice_EnumerationFailed", "Could not enumerate keyboards", exception);
+                SaveButton.IsEnabled = false;
+            }
+        }
+
         if (ActionGroupListBox.SelectedItem is ActionGroupOption { Id: "vtube-studio" }
             && !await EnsureVTubeStudioSetupAsync())
         {
@@ -573,10 +624,33 @@ public partial class KeyEditorWindow : Window
         {
             var option = ActionListBox.SelectedItem as ActionOption
                 ?? throw new InvalidOperationException("Select an action.");
+            var selectedKeyboardDeviceId = KeyboardSelectionSection.Visibility is Visibility.Visible
+                ? KeyboardDeviceComboBox.SelectedValue as string
+                : null;
+            var useAnyKeyboard = selectedKeyboardDeviceId == AnyKeyboardSelection;
+            if (!string.IsNullOrWhiteSpace(selectedKeyboardDeviceId)
+                && !useAnyKeyboard
+                && !availableKeyboards.Any(device => string.Equals(
+                    device.DeviceId,
+                    selectedKeyboardDeviceId,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new FormatException(AppStrings.Get(
+                    "KeyboardDevice_Disconnected.Error",
+                    "Reconnect the selected keyboard or choose the global setting before saving."));
+            }
+
             Assignment = new KeyAssignment(
                 actionOnlyMode && !allowAppearanceEditing ? string.Empty : LabelTextBox.Text,
                 actionOnlyMode && !allowAppearanceEditing ? IconReference.BuiltIn("blank") : selectedIcon,
-                CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))));
+                CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))))
+            {
+                KeyboardDeviceId = string.IsNullOrWhiteSpace(selectedKeyboardDeviceId)
+                    || useAnyKeyboard
+                    ? null
+                    : selectedKeyboardDeviceId,
+                UseAnyKeyboard = useAnyKeyboard,
+            };
             DialogResult = true;
         }
         catch (Exception exception)
@@ -633,6 +707,15 @@ public partial class KeyEditorWindow : Window
 
     private void ApplyAssignment(KeyAssignment assignment)
     {
+        keyboardDeviceId = assignment.KeyboardDeviceId;
+        currentUsesAnyKeyboard = assignment.UseAnyKeyboard;
+        if (KeyboardDeviceComboBox is not null)
+        {
+            KeyboardDeviceComboBox.SelectedValue = assignment.UseAnyKeyboard
+                ? AnyKeyboardSelection
+                : keyboardDeviceId ?? string.Empty;
+        }
+
         LabelTextBox.Text = assignment.Label;
         ShowIcon(assignment.Icon);
         automationSteps.Clear();
@@ -656,6 +739,27 @@ public partial class KeyEditorWindow : Window
         ArgumentsTextBox.Text = state.Arguments ?? string.Empty;
         WorkingDirectoryTextBox.Text = state.WorkingDirectory ?? string.Empty;
         UpdateActionFields();
+    }
+
+    private void KeyboardDeviceComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        UpdateKeyboardDeviceWarning();
+
+    private void UpdateKeyboardDeviceWarning()
+    {
+        if (KeyboardDeviceWarning is not null)
+        {
+            var selection = KeyboardDeviceComboBox.SelectedValue as string;
+            KeyboardDeviceWarning.Visibility = !string.IsNullOrWhiteSpace(selection)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            KeyboardDeviceWarningText.Text = selection == AnyKeyboardSelection
+                ? AppStrings.Get(
+                    "Editor_KeyboardAnyWarning.Text",
+                    "This key responds to every keyboard. Keystrokes cannot be blocked and also type into the focused app.")
+                : AppStrings.Get(
+                    "Editor_KeyboardDeviceWarning.Text",
+                    "This key only responds to the selected keyboard. It cannot be blocked. Each press also types into the focused app. This overrides the global keyboard setting.");
+        }
     }
 
     private void PopulateActions(string group, string? preferredActionId)
@@ -1054,6 +1158,8 @@ public partial class KeyEditorWindow : Window
         };
     }
     private sealed record SoundBehaviorOption(SoundPlaybackBehavior Value, string Name);
+
+    private sealed record KeyboardDeviceOption(string DeviceId, string DisplayName);
     private sealed record ParameterSuggestion(string Value, string Display, string? TargetName = null);
     private sealed record ActionState(
         string Id,

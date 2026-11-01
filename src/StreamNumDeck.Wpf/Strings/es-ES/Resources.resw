@@ -97,7 +97,7 @@
     <value>Interceptar teclas del teclado numérico</value>
   </data>
   <data name="KeyboardDevice_Select.Label" xml:space="preserve">
-    <value>Teclado de origen</value>
+    <value>Teclado global</value>
   </data>
   <data name="KeyboardDevice_All.Label" xml:space="preserve">
     <value>Todos los teclados (captura global)</value>
@@ -106,7 +106,22 @@
     <value>Actualizar</value>
   </data>
   <data name="KeyboardDevice_SelectHint.Text" xml:space="preserve">
-    <value>Al seleccionar un teclado, sus teclas ejecutan acciones y también llegan a la aplicación enfocada. «Todos los teclados» bloquea globalmente las teclas capturadas.</value>
+    <value>Aviso: al seleccionar un teclado, sus teclas capturadas ejecutan acciones pero no se pueden bloquear, por lo que también escriben en la aplicación enfocada. Sin selección, las teclas capturadas se bloquean globalmente. La selección por tecla tiene prioridad sobre esta opción.</value>
+  </data>
+  <data name="KeyboardDevice_Inherit.Label" xml:space="preserve">
+    <value>Usar la configuración global del teclado</value>
+  </data>
+  <data name="KeyboardDevice_Any.Label" xml:space="preserve">
+    <value>Cualquier teclado (ignorar dispositivo)</value>
+  </data>
+  <data name="Editor_KeyboardDevice.Label" xml:space="preserve">
+    <value>Teclado para esta tecla</value>
+  </data>
+  <data name="Editor_KeyboardDeviceWarning.Text" xml:space="preserve">
+    <value>Aviso: esta tecla solo responde al teclado seleccionado. No se puede bloquear, así que cada pulsación también escribe en la aplicación enfocada. Esta opción tiene prioridad sobre la configuración global.</value>
+  </data>
+  <data name="Editor_KeyboardAnyWarning.Text" xml:space="preserve">
+    <value>Aviso: esta tecla responde a cualquier teclado, independientemente de la selección global. No se puede bloquear, así que cada pulsación también escribe en la aplicación enfocada.</value>
   </data>
   <data name="KeyboardDevice_Disconnected.Label" xml:space="preserve">
     <value>Teclado desconectado: {0}</value>

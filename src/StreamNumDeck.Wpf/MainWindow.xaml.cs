@@ -244,7 +244,8 @@ public partial class MainWindow : Window
             OpenVTubeStudioSettings,
             viewModel.GetAudioApplicationsAsync,
             viewModel.PreviewSoundAsync,
-            viewModel.StopSoundsAsync)
+            viewModel.StopSoundsAsync,
+            getAvailableKeyboards: viewModel.GetAvailableKeyboardsAsync)
         {
             Owner = this,
         };
