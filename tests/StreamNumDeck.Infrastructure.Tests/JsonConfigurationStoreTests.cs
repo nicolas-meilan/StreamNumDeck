@@ -63,6 +63,23 @@ public sealed class JsonConfigurationStoreTests
     }
 
     [TestMethod]
+    public async Task SaveAndLoad_PreservesAdditionalButtonKeyAndAssignmentPerProfile()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        var configuration = AppConfiguration.CreateDefault();
+        var assignment = new KeyAssignment("Launch", IconReference.BuiltIn("star"), new StreamNumDeck.Core.Actions.OpenUriActionDefinition("https://example.com"));
+        var profile = configuration.ActiveProfile.WithAdditionalButton(new AdditionalButtonSettings(3, 0x41, assignment));
+        await store.SaveAsync(configuration.ReplaceProfile(profile));
+
+        var loaded = await store.LoadAsync();
+        var button = loaded.ActiveProfile.AdditionalButtons[3];
+        Assert.AreEqual((uint)0x41, button.VirtualKeyCode);
+        Assert.AreEqual("Launch", button.Assignment.Label);
+        Assert.IsInstanceOfType<StreamNumDeck.Core.Actions.OpenUriActionDefinition>(button.Assignment.Action);
+        Assert.HasCount(8, loaded.ActiveProfile.AdditionalButtons);
+    }
+
+    [TestMethod]
     public async Task LoadAsync_WhenNoFileExists_UsesConfiguredDefaultProfileName()
     {
         using var store = new JsonConfigurationStore(

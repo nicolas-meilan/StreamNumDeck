@@ -18,6 +18,7 @@ public sealed class DeckRuntimeService(
     private CancellationTokenSource? processingCancellation;
     private Task? processingTask;
     private bool disposed;
+    private int additionalKeyCaptureMode;
 
     public KeyboardCaptureState CaptureState => keyboardCapture.State;
 
@@ -63,6 +64,10 @@ public sealed class DeckRuntimeService(
 
     public event EventHandler<ActionExecutionFailedEventArgs>? ActionExecutionFailed;
 
+    public void SetAdditionalKeyCaptureMode(bool isCapturing) =>
+        Volatile.Write(ref additionalKeyCaptureMode, isCapturing ? 1 : 0);
+
+
     public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default) =>
         keyboardCapture.SetNumLockAsync(isOn, cancellationToken);
 
@@ -104,6 +109,8 @@ public sealed class DeckRuntimeService(
             }
 
             await keyboardCapture.StartAsync(cancellationToken).ConfigureAwait(false);
+            keyboardCapture.KeyboardInputObserved += KeyboardCapture_KeyboardInputObserved;
+            keyboardCapture.RawKeyboardInputObserved += KeyboardCapture_RawKeyboardInputObserved;
             processingCancellation = new CancellationTokenSource();
             processingTask = ProcessInputAsync(processingCancellation.Token);
         }
@@ -133,6 +140,8 @@ public sealed class DeckRuntimeService(
             }
 
             processingCancellation!.Cancel();
+            keyboardCapture.KeyboardInputObserved -= KeyboardCapture_KeyboardInputObserved;
+            keyboardCapture.RawKeyboardInputObserved -= KeyboardCapture_RawKeyboardInputObserved;
             await keyboardCapture.StopAsync(cancellationToken).ConfigureAwait(false);
 
             try
@@ -212,6 +221,53 @@ public sealed class DeckRuntimeService(
 
             await Task.WhenAll(pendingActions).ConfigureAwait(false);
         }
+    }
+
+    private async void KeyboardCapture_RawKeyboardInputObserved(object? sender, RawKeyboardInputObservedEventArgs e)
+    {
+        if ((!e.IsSelectedDevice && keyboardCapture.SelectedKeyboardDeviceId is not null)
+            || !keyboardCapture.CaptureTargets.Includes(KeyboardCaptureTargets.Numpad)
+            || Volatile.Read(ref additionalKeyCaptureMode) != 0
+            || processingCancellation is null
+            || processingCancellation.IsCancellationRequested)
+            return;
+        try
+        {
+            await ExecuteAdditionalButtonAsync(e.VirtualKeyCode, processingCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (processingCancellation?.IsCancellationRequested == true) { }
+        catch (Exception exception)
+        {
+            ActionExecutionFailed?.Invoke(this, new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
+        }
+    }
+
+    private async void KeyboardCapture_KeyboardInputObserved(object? sender, KeyboardInputObservedEventArgs e)
+    {
+        if (keyboardCapture.SelectedKeyboardDeviceId is not null
+            || !keyboardCapture.CaptureTargets.Includes(KeyboardCaptureTargets.Numpad)
+            || Volatile.Read(ref additionalKeyCaptureMode) != 0
+            || processingCancellation is null
+            || processingCancellation.IsCancellationRequested)
+            return;
+        try
+        {
+            await ExecuteAdditionalButtonAsync(e.VirtualKeyCode, processingCancellation.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (processingCancellation?.IsCancellationRequested == true) { }
+        catch (Exception exception)
+        {
+            ActionExecutionFailed?.Invoke(this, new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
+        }
+    }
+
+    private async Task ExecuteAdditionalButtonAsync(uint virtualKeyCode, CancellationToken cancellationToken)
+    {
+        var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(false);
+        var button = configuration.ActiveProfile.AdditionalButtons.FirstOrDefault(candidate => candidate.VirtualKeyCode == virtualKeyCode);
+        if (button is null || button.Assignment.Action is NoActionDefinition)
+            return;
+        await actionDispatcher.ExecuteAsync(button.Assignment.Action, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task ExecuteActionAsync(

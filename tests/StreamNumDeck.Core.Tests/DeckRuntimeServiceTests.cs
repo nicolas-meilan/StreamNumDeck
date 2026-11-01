@@ -90,6 +90,37 @@ public sealed class DeckRuntimeServiceTests
     }
 
     [TestMethod]
+    public async Task AdditionalButton_RespectsNumpadCaptureToggleAndRunsGloballyWhenEnabled()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var additional = new AdditionalButtonSettings(0, 0x41,
+            new KeyAssignment("Extra", IconReference.BuiltIn("play"), new OpenPathActionDefinition("extra")));
+        configuration = configuration.ReplaceProfile(configuration.ActiveProfile.WithAdditionalButton(additional));
+        using var configurationService = new ConfigurationService(new InMemoryConfigurationStore(configuration));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new BlockingExecutor();
+        var runtime = new DeckRuntimeService(configurationService, capture, new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await runtime.StartAsync();
+            await capture.SetCaptureTargetsAsync(KeyboardCaptureTargets.None);
+            capture.PublishObservedInput(0x41, 0x1E, isExtended: false);
+            await Task.Delay(100);
+            Assert.AreEqual(0, executor.StartCount, "An additional key must be ignored while NumPad capture is disabled.");
+
+            await capture.SetCaptureTargetsAsync(KeyboardCaptureTargets.Numpad);
+            capture.PublishObservedInput(0x41, 0x1E, isExtended: false);
+            await WaitWithTimeoutAsync(executor.FirstStarted.Task);
+        }
+        finally
+        {
+            executor.ReleaseFirst.TrySetResult(true);
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task KeyboardInputObserved_IsForwardedFromCaptureService()
     {
         using var configurationService = new ConfigurationService(
@@ -256,11 +287,7 @@ public sealed class DeckRuntimeServiceTests
 
         public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved;
 
-        public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved
-        {
-            add { }
-            remove { }
-        }
+        public event EventHandler<RawKeyboardInputObservedEventArgs>? RawKeyboardInputObserved;
 
         public event EventHandler<KeyboardDeviceCorrelationObservedEventArgs>? KeyboardDeviceCorrelationObserved
         {
@@ -341,6 +368,10 @@ public sealed class DeckRuntimeServiceTests
             KeyboardInputObserved?.Invoke(
                 this,
                 new KeyboardInputObservedEventArgs(virtualKeyCode, scanCode, isExtended));
+
+        public void PublishRawInput(uint virtualKeyCode, bool isSelectedDevice) =>
+            RawKeyboardInputObserved?.Invoke(this,
+                new RawKeyboardInputObservedEventArgs("test", virtualKeyCode, 0, false, isSelectedDevice));
     }
 
     private sealed class InMemoryConfigurationStore(AppConfiguration configuration) : IConfigurationStore

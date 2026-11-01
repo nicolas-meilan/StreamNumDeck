@@ -254,6 +254,73 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void AdditionalButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || !TryGetSlot(button.Tag, out var slot) || viewModel.SelectedProfile is not DeckProfile profile) return;
+        var config = profile.AdditionalButtons[slot];
+        if (config.VirtualKeyCode is null)
+        {
+            var capture = new AdditionalKeyCaptureWindow { Owner = this };
+            var assigned = false;
+            viewModel.SetAdditionalKeyCaptureMode(true);
+            try
+            {
+                if (capture.ShowDialog() == true)
+                {
+                    await viewModel.UpdateAdditionalButtonAsync(slot, capture.VirtualKeyCode);
+                    assigned = true;
+                }
+            }
+            finally { viewModel.SetAdditionalKeyCaptureMode(false); }
+            if (assigned)
+            {
+                profile = viewModel.SelectedProfile!;
+                config = profile.AdditionalButtons[slot];
+                await OpenAdditionalButtonEditorAsync(slot, config.Assignment);
+            }
+            return;
+        }
+        await OpenAdditionalButtonEditorAsync(slot, config.Assignment);
+    }
+
+    private async Task OpenAdditionalButtonEditorAsync(int slot, KeyAssignment assignment)
+    {
+        var editor = new KeyEditorWindow(DeckKey.Insert, assignment, KeyAssignment.Empty,
+            viewModel.ImportIconAsync, viewModel.ResolveIconPath, viewModel.GetObsCatalogAsync,
+            viewModel.GetVTubeStudioCatalogAsync, viewModel.IsVTubeStudioAuthorizedAsync,
+            OpenVTubeStudioSettings, viewModel.GetAudioApplicationsAsync, viewModel.PreviewSoundAsync,
+            viewModel.StopSoundsAsync, actionOnlyMode: true, allowAppearanceEditing: true) { Owner = this };
+        if (editor.ShowDialog() == true)
+            await viewModel.UpdateAdditionalButtonAsync(slot, assignment: editor.Assignment);
+    }
+
+    private async void AdditionalButtonEditKey_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.MenuItem item || !TryGetSlot(item.Tag, out var slot)) return;
+        var capture = new AdditionalKeyCaptureWindow { Owner = this };
+        viewModel.SetAdditionalKeyCaptureMode(true);
+        try
+        {
+            if (capture.ShowDialog() == true) await viewModel.UpdateAdditionalButtonAsync(slot, capture.VirtualKeyCode);
+        }
+        finally { viewModel.SetAdditionalKeyCaptureMode(false); }
+    }
+
+    private async void AdditionalButtonClearKey_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.MenuItem item && TryGetSlot(item.Tag, out var slot)) await viewModel.UpdateAdditionalButtonAsync(slot, virtualKeyCode: null);
+    }
+
+    private async void AdditionalButtonClearAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.MenuItem item && TryGetSlot(item.Tag, out var slot))
+            await viewModel.UpdateAdditionalButtonAsync(slot, assignment: KeyAssignment.Empty);
+    }
+
+    private static bool TryGetSlot(object? value, out int slot) =>
+        value is int index ? (slot = index) >= 0 && slot < AdditionalButtonSettings.Count
+        : int.TryParse(value as string, out slot) && slot >= 0 && slot < AdditionalButtonSettings.Count;
+
     private bool OpenVTubeStudioSettings(Window owner)
     {
         var settings = new SettingsWindow(viewModel, focusVTubeStudio: true) { Owner = owner };

@@ -144,9 +144,7 @@ public partial class SettingsWindow : Window
             {
                 CaptureNumpad = CaptureNumpadCheckBox.IsChecked == true,
                 CaptureNavigationBlock = CaptureNavigationBlockCheckBox.IsChecked == true,
-                SelectedKeyboardDeviceId = string.IsNullOrWhiteSpace(selectedKeyboardDeviceId)
-                    ? null
-                    : selectedKeyboardDeviceId,
+                SelectedKeyboardDeviceId = selectedKeyboardDeviceId ?? string.Empty,
                 ShowMuteOverlay = ShowMuteOverlayCheckBox.IsChecked == true,
                 VTubeStudio = new VTubeStudioConnectionSettings(
                     VTubeStudioHostTextBox.Text,

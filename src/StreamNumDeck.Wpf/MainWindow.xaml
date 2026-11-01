@@ -3,10 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:presentation="clr-namespace:StreamNumDeck.Wpf.Presentation"
         xmlns:localization="clr-namespace:StreamNumDeck.Wpf.Localization"
+        xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
         Title="StreamNumDeck"
-        Width="500" Height="720"
-        MinWidth="500" MaxWidth="500"
-        MinHeight="720" MaxHeight="720"
+        Width="560" Height="960"
+        MinWidth="560" MaxWidth="560"
+        MinHeight="960" MaxHeight="960"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -39,6 +40,16 @@
                            FontSize="12"
                            TextAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="AdditionalButtonTemplate">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="28" Height="28" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding Glyph}" FontFamily="{Binding GlyphFontFamily}" FontSize="23" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding GlyphVisibility}" />
+                    <Image Source="{Binding CustomIconSource}" Stretch="Uniform" Visibility="{Binding CustomIconVisibility}" />
+                </Grid>
+                <TextBlock Text="{Binding Label}" Margin="0,3,0,0" FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="96" />
             </StackPanel>
         </DataTemplate>
 
@@ -183,7 +194,7 @@
                 </Grid>
             </Border>
 
-            <Grid Grid.Column="1" Width="424" HorizontalAlignment="Center" Margin="0,4,0,8">
+            <Grid Grid.Column="1" Width="480" HorizontalAlignment="Center" Margin="0,4,0,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="46" />
                     <RowDefinition Height="*" />
@@ -226,12 +237,13 @@
                         </Grid>
                     </Border>
 
-                    <Border Width="420" Height="420" Margin="0,12,0,0" Padding="10,8,10,10"
+                    <Border Width="460" Height="650" Margin="0,12,0,0" Padding="10,8,10,10"
                             Background="#202020" BorderBrush="#414141" BorderThickness="1" CornerRadius="12">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="28" />
                                 <RowDefinition Height="*" />
+                                <RowDefinition Height="210" />
                             </Grid.RowDefinitions>
                             <Grid Margin="2,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
@@ -245,7 +257,7 @@
                                           Click="CaptureNumpad_Click"
                                           ToolTip="{localization:Loc Capture_NumPadHint, Fallback=Intercept NumPad keys}" />
                             </Grid>
-                            <Grid Grid.Row="1">
+                            <Grid Grid.Row="1" Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition /><ColumnDefinition /><ColumnDefinition /><ColumnDefinition />
                         </Grid.ColumnDefinitions>
@@ -280,6 +292,39 @@
 
                         <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,4,0" Tag="Numpad0" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad0]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="4" Grid.Column="2" Margin="4,4,4,0" Tag="NumpadDecimal" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadDecimal]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
+                            </Grid>
+
+                            <Grid Grid.Row="2" Margin="0,2,0,0">
+                                <Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <TextBlock Text="Additional buttons" Margin="2,0" FontSize="11" VerticalAlignment="Center" />
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding AdditionalButtons}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><primitives:UniformGrid Columns="4" Rows="2" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="3,1">
+                                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="17"/></Grid.RowDefinitions>
+                                            <Button Grid.Row="0" Tag="{Binding Slot}" Click="AdditionalButton_Click"
+                                                    Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding}"
+                                                    ContentTemplate="{StaticResource AdditionalButtonTemplate}"
+                                                    ToolTip="{Binding Label}">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                                        <MenuItem Header="Assign / change key" Tag="{Binding Slot}" Click="AdditionalButtonEditKey_Click" />
+                                                        <MenuItem Header="Clear key" Tag="{Binding Slot}" Click="AdditionalButtonClearKey_Click" />
+                                                        <Separator />
+                                                        <MenuItem Header="Clear action" Tag="{Binding Slot}" Click="AdditionalButtonClearAction_Click" />
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
+                                            </Button>
+                                            <TextBlock Grid.Row="1" Text="{Binding KeyLabel}" FontSize="9"
+                                                       Foreground="#A8A8A8" TextAlignment="Center"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </Grid>
                         </Grid>
                     </Border>

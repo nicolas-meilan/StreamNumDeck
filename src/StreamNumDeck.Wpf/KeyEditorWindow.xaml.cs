@@ -85,6 +85,7 @@ public partial class KeyEditorWindow : Window
     private readonly Func<CancellationToken, Task> stopSounds;
     private readonly ObservableCollection<AutomationStepItem> automationSteps = new();
     private readonly bool actionOnlyMode;
+    private readonly bool allowAppearanceEditing;
     private CancellationTokenSource? parameterSuggestionsCancellation;
     private int parameterSuggestionsRequestVersion;
     private bool actionGroupSelectionReady;
@@ -105,7 +106,8 @@ public partial class KeyEditorWindow : Window
         Func<CancellationToken, Task<IReadOnlyList<AudioApplication>>> getAudioApplications,
         Func<string, int, SoundPlaybackBehavior, CancellationToken, Task> previewSound,
         Func<CancellationToken, Task> stopSounds,
-        bool actionOnlyMode = false)
+        bool actionOnlyMode = false,
+        bool allowAppearanceEditing = false)
     {
         this.importIcon = importIcon;
         this.resolveIconPath = resolveIconPath;
@@ -118,6 +120,7 @@ public partial class KeyEditorWindow : Window
         this.previewSound = previewSound;
         this.stopSounds = stopSounds;
         this.actionOnlyMode = actionOnlyMode;
+        this.allowAppearanceEditing = allowAppearanceEditing;
         InitializeComponent();
         var isNumLockOn = System.Windows.Input.Keyboard.IsKeyToggled(System.Windows.Input.Key.NumLock);
         var currentLayerName = AppStrings.Get(isNumLockOn ? "Common_On" : "Common_Off", isNumLockOn ? "on" : "off");
@@ -146,7 +149,7 @@ public partial class KeyEditorWindow : Window
             new SoundBehaviorOption(SoundPlaybackBehavior.RestartSameSound, AppStrings.Get("SoundBehavior_Restart", "Restart the same sound")),
             new SoundBehaviorOption(SoundPlaybackBehavior.StopOthers, AppStrings.Get("SoundBehavior_StopOthers", "Stop other sounds")),
         };
-        if (actionOnlyMode)
+        if (actionOnlyMode && !allowAppearanceEditing)
         {
             AppearanceSection.Visibility = Visibility.Collapsed;
             RemoveButton.Visibility = Visibility.Collapsed;
@@ -574,8 +577,8 @@ public partial class KeyEditorWindow : Window
             var option = ActionListBox.SelectedItem as ActionOption
                 ?? throw new InvalidOperationException("Select an action.");
             Assignment = new KeyAssignment(
-                actionOnlyMode ? string.Empty : LabelTextBox.Text,
-                actionOnlyMode ? IconReference.BuiltIn("blank") : selectedIcon,
+                actionOnlyMode && !allowAppearanceEditing ? string.Empty : LabelTextBox.Text,
+                actionOnlyMode && !allowAppearanceEditing ? IconReference.BuiltIn("blank") : selectedIcon,
                 CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))))
             {
                 IdentifySelectedKeyboardBeforeBlocking =

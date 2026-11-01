@@ -86,6 +86,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     public IReadOnlyDictionary<string, DeckKeyTileViewModel> Tiles { get; }
+    public IReadOnlyList<AdditionalButtonTileViewModel> AdditionalButtons { get; } = Enumerable.Range(0, AdditionalButtonSettings.Count).Select(static slot => new AdditionalButtonTileViewModel(slot)).ToArray();
     public ObservableCollection<DeckProfile> Profiles { get; } = new();
     public event Action<string, string>? UserErrorRaised;
     public event EventHandler<KeyboardInputObservedEventArgs>? KeyboardInputObserved
@@ -177,7 +178,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 await runtimeService.StartAsync(cancellationToken).ConfigureAwait(true);
             }
             catch (Exception exception) when (
-                configuration.Settings.SelectedKeyboardDeviceId is not null
+                !string.IsNullOrWhiteSpace(configuration.Settings.SelectedKeyboardDeviceId)
                 && !cancellationToken.IsCancellationRequested)
             {
                 ReportKeyboardCaptureError(exception);
@@ -548,6 +549,25 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ReplaceProfiles(configuration, profileId);
     }
 
+    public async Task UpdateAdditionalButtonAsync(int slot, uint? virtualKeyCode = null, KeyAssignment? assignment = null)
+    {
+        var profileId = SelectedProfile?.Id ?? throw new InvalidOperationException("No profile is selected.");
+        var configuration = await configurationService.UpdateAsync(current =>
+        {
+            var profile = current.Profiles.Single(candidate => candidate.Id == profileId);
+            var button = profile.AdditionalButtons[slot];
+            if (virtualKeyCode.HasValue || assignment is null)
+                button = button.WithKey(virtualKeyCode);
+            if (assignment is not null)
+                button = button.WithAssignment(assignment);
+            return current.ReplaceProfile(profile.WithAdditionalButton(button));
+        }).ConfigureAwait(true);
+        await RefreshPreloadedSoundsAsync(configuration).ConfigureAwait(true);
+        ReplaceProfiles(configuration, profileId);
+    }
+
+    public void SetAdditionalKeyCaptureMode(bool isCapturing) => runtimeService.SetAdditionalKeyCaptureMode(isCapturing);
+
     private async Task RefreshPreloadedSoundsAsync(
         AppConfiguration configuration,
         CancellationToken cancellationToken = default)
@@ -616,6 +636,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         foreach (var pair in Tiles)
         {
             pair.Value.Update(layer.GetAssignment((DeckKey)Enum.Parse(typeof(DeckKey), pair.Key)), iconAssetStore);
+        }
+        foreach (var tile in AdditionalButtons)
+        {
+            var button = SelectedProfile.AdditionalButtons[tile.Slot];
+            tile.Update(button.VirtualKeyCode, button.Assignment, iconAssetStore);
         }
     }
 

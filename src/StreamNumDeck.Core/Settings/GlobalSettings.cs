@@ -125,7 +125,8 @@ public sealed record GlobalSettings
 
     public bool CaptureNavigationBlock { get; init; } = true;
 
-    public string? SelectedKeyboardDeviceId { get; init; }
+    // Empty means the explicit “all keyboards” (global capture) option.
+    public string? SelectedKeyboardDeviceId { get; init; } = string.Empty;
 
     public bool ShowMuteOverlay { get; init; } = true;
 
