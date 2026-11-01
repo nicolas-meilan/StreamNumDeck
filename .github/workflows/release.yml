@@ -1,0 +1,91 @@
+name: Build and publish release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.301
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build release packages
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$') {
+            throw "Release tag must contain a semantic version, optionally prefixed with 'v': $env:GITHUB_REF_NAME"
+          }
+          $version = $Matches[1]
+          .\scripts\package-wpf.ps1 -Version $version
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Release packaging failed.'
+          }
+
+      - name: Upload packages and publish SHA-256 hashes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          $releaseRoot = Join-Path $env:GITHUB_WORKSPACE 'artifacts\release'
+          $portable = Join-Path $releaseRoot "StreamNumDeck-$version-portable.zip"
+          $setup = Join-Path $releaseRoot "StreamNumDeck-$version-Setup.exe"
+          foreach ($artifact in @($portable, $setup)) {
+            if (-not (Test-Path -LiteralPath $artifact)) {
+              throw "Expected release artifact was not created: $artifact"
+            }
+          }
+
+          $checksums = foreach ($artifact in @($setup, $portable)) {
+            $item = Get-Item -LiteralPath $artifact
+            $hash = (Get-FileHash -LiteralPath $artifact -Algorithm SHA256).Hash
+            "{0}  {1}" -f $hash, $item.Name
+          }
+          $checksumPath = Join-Path $env:RUNNER_TEMP 'SHA256SUMS.txt'
+          [System.IO.File]::WriteAllLines(
+            $checksumPath,
+            [string[]]$checksums,
+            [System.Text.Encoding]::ASCII)
+
+          gh release upload $env:GITHUB_REF_NAME $portable $setup $checksumPath --clobber
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Uploading release assets failed.'
+          }
+
+          $releaseBodyLines = gh release view $env:GITHUB_REF_NAME --json body --jq .body
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Could not read the release notes.'
+          }
+          [string]$releaseBody = $releaseBodyLines -join [Environment]::NewLine
+          $releaseBody = $releaseBody -replace '(?ms)\r?\n### SHA-256\r?\n.*?(?=\r?\n#{1,6}\s|\z)', ''
+          $hashLines = foreach ($line in $checksums) {
+            $parts = $line -split '  ', 2
+            '* `{0}`: `{1}`' -f $parts[1], $parts[0]
+          }
+          $notes = $releaseBody.TrimEnd() + [Environment]::NewLine + [Environment]::NewLine +
+            '### SHA-256' + [Environment]::NewLine +
+            ($hashLines -join [Environment]::NewLine) + [Environment]::NewLine
+          $notesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          [System.IO.File]::WriteAllText(
+            $notesPath,
+            $notes,
+            [System.Text.UTF8Encoding]::new($false))
+
+          gh release edit $env:GITHUB_REF_NAME --notes-file $notesPath
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Could not update release notes with SHA-256 hashes.'
+          }

@@ -156,6 +156,8 @@ To package the portable ZIP and installer executable instead, run the packaging 
 
 The ZIP and `Setup.exe` are written to `artifacts\release`.
 
+When a GitHub Release is published, GitHub Actions builds both packages from that release tag, uploads them as release assets, and adds their SHA-256 hashes to the release notes and `SHA256SUMS.txt`.
+
 ---
 
 <a id="russian"></a>
@@ -266,6 +268,8 @@ dotnet publish .\src\StreamNumDeck.Wpf\StreamNumDeck.Wpf.csproj --configuration 
 ```
 
 ZIP и `Setup.exe` будут созданы в `artifacts\release`.
+
+При публикации GitHub Release GitHub Actions собирает оба пакета из соответствующего тега, загружает их в релиз и добавляет SHA-256 в описание релиза и файл `SHA256SUMS.txt`.
 
 ## Author and license / Автор и лицензия
 
