@@ -104,6 +104,8 @@ public sealed class DeckRuntimeService(
                 return;
             }
 
+            configurationService.Changed += ConfigurationService_Changed;
+            ApplyKeyRemappings(await configurationService.GetAsync(cancellationToken).ConfigureAwait(false));
             await keyboardCapture.StartAsync(cancellationToken).ConfigureAwait(false);
             keyboardCapture.KeyboardInputObserved += KeyboardCapture_KeyboardInputObserved;
             keyboardCapture.RawKeyboardInputObserved += KeyboardCapture_RawKeyboardInputObserved;
@@ -112,6 +114,7 @@ public sealed class DeckRuntimeService(
         }
         catch
         {
+            configurationService.Changed -= ConfigurationService_Changed;
             await keyboardCapture.StopAsync(CancellationToken.None).ConfigureAwait(false);
             processingCancellation?.Dispose();
             processingCancellation = null;
@@ -137,6 +140,7 @@ public sealed class DeckRuntimeService(
 
             processingCancellation!.Cancel();
             CancelPendingAdditionalKeySequence();
+            configurationService.Changed -= ConfigurationService_Changed;
             keyboardCapture.KeyboardInputObserved -= KeyboardCapture_KeyboardInputObserved;
             keyboardCapture.RawKeyboardInputObserved -= KeyboardCapture_RawKeyboardInputObserved;
             await keyboardCapture.StopAsync(cancellationToken).ConfigureAwait(false);
@@ -524,6 +528,25 @@ public sealed class DeckRuntimeService(
         additionalKeySequenceTimeout = null;
         timeoutSource?.Cancel();
     }
+
+    private void ConfigurationService_Changed(object? sender, ConfigurationChangedEventArgs e) =>
+        ApplyKeyRemappings(e.Configuration);
+
+    private void ApplyKeyRemappings(AppConfiguration configuration)
+    {
+        var profile = configuration.Profiles.Single(candidate => candidate.Id == configuration.ActiveProfileId);
+        keyboardCapture.SetKeyRemappings(
+            GetKeyRemappings(profile.NumLockOff),
+            GetKeyRemappings(profile.NumLockOn));
+    }
+
+    private static IReadOnlyDictionary<DeckKey, uint> GetKeyRemappings(DeckLayer layer) =>
+        layer.Assignments
+            .Select(static pair => (pair.Key, pair.Value.RemappedVirtualKeyCode))
+            .Where(static pair => pair.RemappedVirtualKeyCode.HasValue)
+            .ToDictionary(
+                static pair => pair.Key,
+                static pair => pair.RemappedVirtualKeyCode.GetValueOrDefault());
 
     private async Task ExecuteAdditionalButtonAsync(int slot, CancellationToken cancellationToken)
     {

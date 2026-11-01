@@ -67,7 +67,10 @@ public sealed class JsonConfigurationStoreTests
     {
         using var store = new JsonConfigurationStore(paths);
         var configuration = AppConfiguration.CreateDefault();
-        var assignment = new KeyAssignment("Launch", IconReference.BuiltIn("star"), new StreamNumDeck.Core.Actions.OpenUriActionDefinition("https://example.com"));
+        var assignment = new KeyAssignment("Launch", IconReference.BuiltIn("star"), new StreamNumDeck.Core.Actions.OpenUriActionDefinition("https://example.com"))
+        {
+            RemappedVirtualKeyCode = 0x87,
+        };
         var profile = configuration.ActiveProfile.WithAdditionalButton(new AdditionalButtonSettings(3, 0x41, assignment));
         await store.SaveAsync(configuration.ReplaceProfile(profile));
 
@@ -75,6 +78,7 @@ public sealed class JsonConfigurationStoreTests
         var button = loaded.ActiveProfile.AdditionalButtons[3];
         Assert.AreEqual((uint)0x41, button.VirtualKeyCode);
         Assert.AreEqual("Launch", button.Assignment.Label);
+        Assert.AreEqual((uint)0x87, button.Assignment.RemappedVirtualKeyCode);
         Assert.IsInstanceOfType<StreamNumDeck.Core.Actions.OpenUriActionDefinition>(button.Assignment.Action);
         Assert.HasCount(8, loaded.ActiveProfile.AdditionalButtons);
     }

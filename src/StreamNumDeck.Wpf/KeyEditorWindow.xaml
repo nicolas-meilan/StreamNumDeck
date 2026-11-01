@@ -210,6 +210,15 @@
                                 Height="34" VerticalAlignment="Bottom" Click="CopyOtherLayer_Click" />
                     </Grid>
 
+                    <StackPanel x:Name="RemappingSection" Margin="0,14,0,0">
+                        <TextBlock Text="Remap this key (optional)" Margin="0,0,0,6" />
+                        <ComboBox x:Name="RemappedKeyComboBox" Height="34"
+                                  DisplayMemberPath="Name" SelectedValuePath="VirtualKeyCode" />
+                        <TextBlock Text="Sends F13–F24 to Windows and runs this button's configured action. The remapped key is intercepted globally, even when a specific keyboard is selected."
+                                   Margin="0,6,0,0" FontSize="11"
+                                   Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+
                     <Border Height="1" Background="#414141" Margin="0,20,0,18" />
                     </StackPanel>
 

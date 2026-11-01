@@ -149,6 +149,14 @@ public partial class KeyEditorWindow : Window
             new SoundBehaviorOption(SoundPlaybackBehavior.RestartSameSound, AppStrings.Get("SoundBehavior_Restart", "Restart the same sound")),
             new SoundBehaviorOption(SoundPlaybackBehavior.StopOthers, AppStrings.Get("SoundBehavior_StopOthers", "Stop other sounds")),
         };
+        RemappedKeyComboBox.ItemsSource = new[]
+            {
+                new RemappedKeyOption(null, "No remapping"),
+            }
+            .Concat(Enumerable.Range(13, 12).Select(static number =>
+                new RemappedKeyOption((uint)(0x70 + number - 1), $"F{number}")))
+            .ToArray();
+        RemappingSection.Visibility = actionOnlyMode ? Visibility.Collapsed : Visibility.Visible;
         if (actionOnlyMode && !allowAppearanceEditing)
         {
             AppearanceSection.Visibility = Visibility.Collapsed;
@@ -576,7 +584,10 @@ public partial class KeyEditorWindow : Window
             Assignment = new KeyAssignment(
                 actionOnlyMode && !allowAppearanceEditing ? string.Empty : LabelTextBox.Text,
                 actionOnlyMode && !allowAppearanceEditing ? IconReference.BuiltIn("blank") : selectedIcon,
-                CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))));
+                CreateAction(option.Id, GetParameter(), checked((int)Math.Round(VolumeSlider.Value))))
+            {
+                RemappedVirtualKeyCode = (RemappedKeyComboBox.SelectedItem as RemappedKeyOption)?.VirtualKeyCode,
+            };
             DialogResult = true;
         }
         catch (Exception exception)
@@ -634,6 +645,8 @@ public partial class KeyEditorWindow : Window
     private void ApplyAssignment(KeyAssignment assignment)
     {
         LabelTextBox.Text = assignment.Label;
+        RemappedKeyComboBox.SelectedItem = ((IEnumerable<RemappedKeyOption>)RemappedKeyComboBox.ItemsSource)
+            .First(option => option.VirtualKeyCode == assignment.RemappedVirtualKeyCode);
         ShowIcon(assignment.Icon);
         automationSteps.Clear();
         if (assignment.Action is AutomationActionDefinition automation)
@@ -1054,6 +1067,8 @@ public partial class KeyEditorWindow : Window
         };
     }
     private sealed record SoundBehaviorOption(SoundPlaybackBehavior Value, string Name);
+
+    private sealed record RemappedKeyOption(uint? VirtualKeyCode, string Name);
     private sealed record ParameterSuggestion(string Value, string Display, string? TargetName = null);
     private sealed record ActionState(
         string Id,

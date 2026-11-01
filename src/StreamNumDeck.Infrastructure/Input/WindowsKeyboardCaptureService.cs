@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -28,6 +29,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
 
     private readonly object gate = new();
     private readonly object pressedKeysGate = new();
+    private readonly object remappedKeysGate = new();
     private readonly SemaphoreSlim deviceGate = new(1, 1);
     private readonly Channel<CapturedKeyPress> channel = Channel.CreateBounded<CapturedKeyPress>(
         new BoundedChannelOptions(128)
@@ -38,6 +40,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             AllowSynchronousContinuations = false,
         });
     private readonly HashSet<DeckKey> pressedKeys = [];
+    private readonly Dictionary<DeckKey, uint> pressedRemappedKeys = [];
     private readonly LowLevelKeyboardProc hookCallback;
     private readonly Timer numLockMonitor;
     private WindowsRawInputKeyboardSource? rawInputSource;
@@ -48,6 +51,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private uint hookThreadId;
     private volatile bool numLockOn;
     private int captureTargets = (int)KeyboardCaptureTargets.All;
+    private ImmutableDictionary<DeckKey, uint> numLockOffRemappings = ImmutableDictionary<DeckKey, uint>.Empty;
+    private ImmutableDictionary<DeckKey, uint> numLockOnRemappings = ImmutableDictionary<DeckKey, uint>.Empty;
     private long suppressNumLockPollingUntil;
     private bool numLockKeyDown;
     private bool controlDown;
@@ -260,6 +265,19 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         return Task.CompletedTask;
     }
 
+    public void SetKeyRemappings(
+        IReadOnlyDictionary<DeckKey, uint> numLockOffRemappings,
+        IReadOnlyDictionary<DeckKey, uint> numLockOnRemappings)
+    {
+        Guard.NotDisposed(disposed, this);
+        Guard.NotNull(numLockOffRemappings, nameof(numLockOffRemappings));
+        Guard.NotNull(numLockOnRemappings, nameof(numLockOnRemappings));
+        ValidateKeyRemappings(numLockOffRemappings);
+        ValidateKeyRemappings(numLockOnRemappings);
+        Volatile.Write(ref this.numLockOffRemappings, numLockOffRemappings.ToImmutableDictionary());
+        Volatile.Write(ref this.numLockOnRemappings, numLockOnRemappings.ToImmutableDictionary());
+    }
+
     public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default)
     {
         Guard.NotDisposed(disposed, this);
@@ -384,6 +402,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 input.ScanCode,
                 isExtended,
                 out var translatedKey);
+            var remappedInput = hasTranslatedKey
+                && HandleRemappedKey(translatedKey, isDown);
             CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isDown
                 ? new CapturedKeyPress(
                     translatedKey,
@@ -391,14 +411,17 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                     DateTimeOffset.UtcNow,
                     input.VkCode)
                 : null;
-            KeyboardInputObserved?.Invoke(
-                this,
-                new KeyboardInputObservedEventArgs(
-                    input.VkCode,
-                    input.ScanCode,
-                    isExtended,
-                    isDown,
-                    capturedKeyPress));
+            if (!remappedInput)
+            {
+                KeyboardInputObserved?.Invoke(
+                    this,
+                    new KeyboardInputObservedEventArgs(
+                        input.VkCode,
+                        input.ScanCode,
+                        isExtended,
+                        isDown,
+                        capturedKeyPress));
+            }
 
             UpdateModifierState(input.VkCode, isDown);
             if (HandleEmergencyPause(input.VkCode, isDown, isUp))
@@ -428,6 +451,20 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
+            if (remappedInput)
+            {
+                if (isDown && AddPressedKey(translatedKey))
+                {
+                    channel.Writer.TryWrite(capturedKeyPress!.Value);
+                }
+                else if (isUp)
+                {
+                    RemovePressedKey(translatedKey);
+                }
+
+                return 1;
+            }
+
             var key = translatedKey;
             if (SelectedKeyboardDeviceId is { } selectedDeviceId)
             {
@@ -437,7 +474,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 }
 
                 // Raw Input identifies the selected device and queues its action.
-                // The low-level hook has no device identity, so selected-device keys pass through.
+                // The low-level hook has no device identity, so non-remapped keys pass through.
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
@@ -480,6 +517,86 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         else if (virtualKey is VkMenu or 0xA4 or 0xA5)
         {
             altDown = isDown;
+        }
+    }
+
+    private bool HandleRemappedKey(DeckKey key, bool isDown)
+    {
+        uint targetVirtualKeyCode;
+        if (isDown)
+        {
+            lock (remappedKeysGate)
+            {
+                if (pressedRemappedKeys.ContainsKey(key))
+                {
+                    return true;
+                }
+
+                if (state is not KeyboardCaptureState.Running
+                    || !CaptureTargets.Includes(key)
+                    || !GetRemappings().TryGetValue(key, out targetVirtualKeyCode))
+                {
+                    return false;
+                }
+
+                pressedRemappedKeys.Add(key, targetVirtualKeyCode);
+                SendRemappedKey(targetVirtualKeyCode, isKeyUp: false);
+            }
+
+            return true;
+        }
+
+        lock (remappedKeysGate)
+        {
+            if (!pressedRemappedKeys.TryGetValue(key, out targetVirtualKeyCode))
+            {
+                return false;
+            }
+
+            pressedRemappedKeys.Remove(key);
+        }
+
+        SendRemappedKey(targetVirtualKeyCode, isKeyUp: true);
+        return true;
+    }
+
+    private ImmutableDictionary<DeckKey, uint> GetRemappings() =>
+        numLockOn
+            ? Volatile.Read(ref numLockOnRemappings)
+            : Volatile.Read(ref numLockOffRemappings);
+
+    private static void ValidateKeyRemappings(IReadOnlyDictionary<DeckKey, uint> remappings)
+    {
+        foreach (var remapping in remappings)
+        {
+            var key = remapping.Key;
+            var virtualKeyCode = remapping.Value;
+            if (!DeckKeyCatalog.AssignableKeys.Contains(key))
+            {
+                throw new ArgumentOutOfRangeException(nameof(remappings), key, "Only assignable deck keys can be remapped.");
+            }
+
+            if (virtualKeyCode < KeyAssignment.FirstRemappableVirtualKeyCode
+                || virtualKeyCode > KeyAssignment.LastRemappableVirtualKeyCode)
+            {
+                throw new ArgumentOutOfRangeException(nameof(remappings), virtualKeyCode, "Only F13 through F24 can be remapping targets.");
+            }
+        }
+    }
+
+    private void SendRemappedKey(uint virtualKeyCode, bool isKeyUp)
+    {
+        var flags = isKeyUp ? KeyeventfKeyup : 0;
+        var sent = SendInput(
+            1,
+            [CreateKeyboardInput(virtualKeyCode, flags)],
+            Marshal.SizeOf<Input>());
+        if (sent != 1)
+        {
+            CaptureError?.Invoke(
+                this,
+                new KeyboardCaptureErrorEventArgs(
+                    new Win32Exception(Marshal.GetLastWin32Error(), "Windows could not send the remapped key.")));
         }
     }
 
@@ -601,6 +718,18 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         lock (pressedKeysGate)
         {
             pressedKeys.Clear();
+        }
+
+        uint[] pressedRemappedVirtualKeys;
+        lock (remappedKeysGate)
+        {
+            pressedRemappedVirtualKeys = pressedRemappedKeys.Values.ToArray();
+            pressedRemappedKeys.Clear();
+        }
+
+        foreach (var virtualKeyCode in pressedRemappedVirtualKeys)
+        {
+            SendRemappedKey(virtualKeyCode, isKeyUp: true);
         }
     }
 

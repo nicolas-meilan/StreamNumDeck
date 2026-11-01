@@ -52,6 +52,93 @@ public sealed class DeckRuntimeServiceTests
     }
 
     [TestMethod]
+    public async Task Runtime_UpdatesKeyboardRemappingsWhenConfigurationChanges()
+    {
+        var assignment = KeyAssignment.Empty with { RemappedVirtualKeyCode = 0x7C };
+        var configuration = AppConfiguration.CreateDefault();
+        var profile = configuration.ActiveProfile
+            .WithAssignment(NumLockLayer.Off, DeckKey.Numpad1, assignment)
+            .WithAssignment(
+                NumLockLayer.On,
+                DeckKey.Numpad1,
+                KeyAssignment.Empty with { RemappedVirtualKeyCode = 0x87 });
+        configuration = configuration.ReplaceProfile(profile);
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration));
+        var capture = new TestKeyboardCaptureService();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(Array.Empty<IActionExecutor>()));
+
+        try
+        {
+            await runtime.StartAsync();
+            Assert.AreEqual((uint)0x7C, capture.NumLockOffRemappings[DeckKey.Numpad1]);
+            Assert.AreEqual((uint)0x87, capture.NumLockOnRemappings[DeckKey.Numpad1]);
+
+            await configurationService.UpdateAsync(current =>
+            {
+                var activeProfile = current.ActiveProfile.WithAssignment(
+                    NumLockLayer.Off,
+                    DeckKey.Numpad1,
+                    KeyAssignment.Empty with { RemappedVirtualKeyCode = 0x80 });
+                return current.ReplaceProfile(activeProfile);
+            });
+
+            Assert.AreEqual((uint)0x80, capture.NumLockOffRemappings[DeckKey.Numpad1]);
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task RemappedPhysicalKey_RunsItsConfiguredAction()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var assignment = new KeyAssignment(
+            "F24 action",
+            IconReference.BuiltIn("play"),
+            new OpenPathActionDefinition("f24-action"))
+        {
+            RemappedVirtualKeyCode = KeyAssignment.LastRemappableVirtualKeyCode,
+        };
+        var profile = configuration.ActiveProfile.WithAssignment(
+            NumLockLayer.Off,
+            DeckKey.NumpadEnter,
+            assignment);
+        configuration = configuration.ReplaceProfile(profile);
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync("selected-keyboard");
+            await runtime.StartAsync();
+            Assert.AreEqual(
+                KeyAssignment.LastRemappableVirtualKeyCode,
+                capture.NumLockOffRemappings[DeckKey.NumpadEnter]);
+
+            capture.PublishRemappedKey(DeckKey.NumpadEnter);
+
+            await WaitWithTimeoutAsync(executor.FirstExecution.Task);
+            CollectionAssert.AreEqual(new[] { "f24-action" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task SameKey_QueuesRepeatedExecutionsWithoutOverlap()
     {
         var configuration = AppConfiguration.CreateDefault();
@@ -385,6 +472,12 @@ public sealed class DeckRuntimeServiceTests
 
         public IReadOnlyCollection<DeckKey> DeviceIdentificationKeysOn { get; private set; } = [];
 
+        public IReadOnlyDictionary<DeckKey, uint> NumLockOffRemappings { get; private set; } =
+            new Dictionary<DeckKey, uint>();
+
+        public IReadOnlyDictionary<DeckKey, uint> NumLockOnRemappings { get; private set; } =
+            new Dictionary<DeckKey, uint>();
+
         public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
         public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
@@ -419,6 +512,14 @@ public sealed class DeckRuntimeServiceTests
         {
             CaptureTargets = targets;
             return Task.CompletedTask;
+        }
+
+        public void SetKeyRemappings(
+            IReadOnlyDictionary<DeckKey, uint> numLockOffRemappings,
+            IReadOnlyDictionary<DeckKey, uint> numLockOnRemappings)
+        {
+            NumLockOffRemappings = numLockOffRemappings.ToDictionary(static pair => pair.Key, static pair => pair.Value);
+            NumLockOnRemappings = numLockOnRemappings.ToDictionary(static pair => pair.Key, static pair => pair.Value);
         }
 
         public Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
@@ -456,6 +557,14 @@ public sealed class DeckRuntimeServiceTests
 
         public void Publish(DeckKey key) => channel.Writer.TryWrite(
             new CapturedKeyPress(key, NumLockLayer.Off, DateTimeOffset.UtcNow));
+
+        public void PublishRemappedKey(DeckKey key)
+        {
+            if (NumLockOffRemappings.ContainsKey(key))
+            {
+                channel.Writer.TryWrite(new CapturedKeyPress(key, NumLockLayer.Off, DateTimeOffset.UtcNow));
+            }
+        }
 
         public void PublishObservedInput(
             uint virtualKeyCode,

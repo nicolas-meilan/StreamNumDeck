@@ -30,6 +30,10 @@ public interface IKeyboardCaptureService : IAsyncDisposable
         KeyboardCaptureTargets targets,
         CancellationToken cancellationToken = default);
 
+    void SetKeyRemappings(
+        IReadOnlyDictionary<DeckKey, uint> numLockOffRemappings,
+        IReadOnlyDictionary<DeckKey, uint> numLockOnRemappings);
+
     Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
         CancellationToken cancellationToken = default);
 

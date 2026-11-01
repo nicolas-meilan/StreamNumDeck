@@ -64,6 +64,18 @@ public sealed class DeckModelTests
     }
 
     [TestMethod]
+    public void KeyAssignment_OnlyAllowsF13ThroughF24AsRemappingTargets()
+    {
+        var assignment = KeyAssignment.Empty with { RemappedVirtualKeyCode = 0x7C };
+
+        Assert.AreEqual((uint)0x7C, assignment.RemappedVirtualKeyCode);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(
+            () => _ = KeyAssignment.Empty with { RemappedVirtualKeyCode = 0x7B });
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(
+            () => _ = KeyAssignment.Empty with { RemappedVirtualKeyCode = 0x88 });
+    }
+
+    [TestMethod]
     public void NoActionAssignment_DiscardsStalePresentation()
     {
         var assignment = new KeyAssignment(

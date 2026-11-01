@@ -101,6 +101,8 @@ The portable build stores profiles and settings in `%LocalAppData%\StreamNumDeck
 
 The numpad (including Backspace) and the six-key navigation block can be captured independently from the main window. The microphone indicator can be disabled in **Settings → System**. Capture can also be paused from the tray menu. `Ctrl+Alt+F12` remains available as an emergency capture toggle.
 
+To turn a captured key into a virtual hotkey, open that key's configuration and choose **F13–F24** under **Remap this key**. The chosen key is sent instead of the original key and its configured action. Since Windows' low-level keyboard hook cannot identify which physical keyboard sent a key, a remapped key is intercepted on all keyboards, including when a specific keyboard is selected. Choose the destination from the list because most keyboards do not have F13–F24 keys.
+
 ### OBS Studio
 
 StreamNumDeck uses the OBS WebSocket 5.x interface built into current OBS Studio versions. Enable the WebSocket server in OBS, then copy its address, port, and optional password into StreamNumDeck settings.
