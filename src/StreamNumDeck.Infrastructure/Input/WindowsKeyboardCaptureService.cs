@@ -40,6 +40,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             AllowSynchronousContinuations = false,
         });
     private readonly HashSet<DeckKey> pressedKeys = [];
+    private readonly HashSet<uint> pressedAdditionalButtonKeys = [];
     private readonly Dictionary<string, HashSet<DeckKey>> rawPressedKeys = new(StringComparer.OrdinalIgnoreCase);
     private readonly LowLevelKeyboardProc hookCallback;
     private readonly Timer numLockMonitor;
@@ -61,6 +62,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private volatile KeyboardCaptureState state = KeyboardCaptureState.Stopped;
     private ImmutableHashSet<DeckKey> deviceSpecificKeys = ImmutableHashSet<DeckKey>.Empty;
     private ImmutableHashSet<DeckKey> anyKeyboardKeys = ImmutableHashSet<DeckKey>.Empty;
+    private ImmutableDictionary<uint, ImmutableArray<AdditionalButtonCaptureRule>> additionalButtonCaptureRules =
+        ImmutableDictionary<uint, ImmutableArray<AdditionalButtonCaptureRule>>.Empty;
     private int additionalButtonDeviceRoutingEnabled;
 
     public WindowsKeyboardCaptureService()
@@ -209,6 +212,27 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         {
             deviceGate.Release();
         }
+    }
+
+    public Task SetAdditionalButtonCaptureRulesAsync(
+        IReadOnlyCollection<AdditionalButtonCaptureRule> rules,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        rules = Guard.NotNull(rules, nameof(rules));
+        if (rules.Any(static rule => !Enum.IsDefined(typeof(AdditionalButtonNumLockMode), rule.NumLockMode)))
+        {
+            throw new ArgumentOutOfRangeException(nameof(rules), "Unknown additional button NumLock mode.");
+        }
+
+        var mappedRules = rules
+            .GroupBy(static rule => rule.VirtualKeyCode)
+            .ToImmutableDictionary(
+                static group => group.Key,
+                static group => group.Distinct().ToImmutableArray());
+        Volatile.Write(ref additionalButtonCaptureRules, mappedRules);
+        return Task.CompletedTask;
     }
 
     public Task SetDeviceIdentificationKeysAsync(
@@ -506,6 +530,42 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
             }
 
+            if (SelectedKeyboardDeviceId is null
+                && TryGetAdditionalButtonCaptureMode(
+                    input.VkCode,
+                    out var captureAdditionalButton,
+                    out var numLockModeMatches))
+            {
+                if (isUp)
+                {
+                    lock (pressedKeysGate)
+                    {
+                        if (pressedAdditionalButtonKeys.Remove(input.VkCode))
+                        {
+                            return 1;
+                        }
+                    }
+                }
+
+                if (!numLockModeMatches)
+                {
+                    return CallNextHookEx(hookHandle, code, wParam, lParam);
+                }
+
+                if (isDown
+                    && state is KeyboardCaptureState.Running
+                    && CaptureTargets.Includes(KeyboardCaptureTargets.Numpad)
+                    && captureAdditionalButton)
+                {
+                    lock (pressedKeysGate)
+                    {
+                        pressedAdditionalButtonKeys.Add(input.VkCode);
+                        return 1;
+                    }
+                }
+
+            }
+
             if (!hasTranslatedKey)
             {
                 return CallNextHookEx(hookHandle, code, wParam, lParam);
@@ -760,11 +820,37 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         }
     }
 
+    private bool TryGetAdditionalButtonCaptureMode(
+        uint virtualKeyCode,
+        out bool shouldCapture,
+        out bool numLockModeMatches)
+    {
+        var rules = Volatile.Read(ref additionalButtonCaptureRules);
+        if (!rules.TryGetValue(virtualKeyCode, out var modes))
+        {
+            shouldCapture = false;
+            numLockModeMatches = false;
+            return false;
+        }
+
+        var activeRules = modes.Where(rule => rule.NumLockMode switch
+        {
+            AdditionalButtonNumLockMode.Ignore => true,
+            AdditionalButtonNumLockMode.Off => !numLockOn,
+            AdditionalButtonNumLockMode.On => numLockOn,
+            _ => false,
+        }).ToArray();
+        numLockModeMatches = activeRules.Length > 0;
+        shouldCapture = activeRules.Any(static rule => rule.CaptureGlobally);
+        return true;
+    }
+
     private void ClearPressedKeys()
     {
         lock (pressedKeysGate)
         {
             pressedKeys.Clear();
+            pressedAdditionalButtonKeys.Clear();
         }
     }
 

@@ -73,7 +73,10 @@ public sealed class JsonConfigurationStoreTests
             UseAnyKeyboard = true,
         };
         var profile = configuration.ActiveProfile.WithAdditionalButton(
-            new AdditionalButtonSettings(3, 0x41, assignment));
+            new AdditionalButtonSettings(3, 0x41, assignment)
+            {
+                NumLockMode = AdditionalButtonNumLockMode.On,
+            });
         await store.SaveAsync(configuration.ReplaceProfile(profile));
 
         var loaded = await store.LoadAsync();
@@ -82,8 +85,9 @@ public sealed class JsonConfigurationStoreTests
         Assert.AreEqual("Launch", button.Assignment.Label);
         Assert.AreEqual("keyboard-device-id", button.Assignment.KeyboardDeviceId);
         Assert.IsTrue(button.Assignment.UseAnyKeyboard);
+        Assert.AreEqual(AdditionalButtonNumLockMode.On, button.NumLockMode);
         Assert.IsInstanceOfType<StreamNumDeck.Core.Actions.OpenUriActionDefinition>(button.Assignment.Action);
-        Assert.HasCount(8, loaded.ActiveProfile.AdditionalButtons);
+        Assert.HasCount(16, loaded.ActiveProfile.AdditionalButtons);
     }
 
     [TestMethod]
@@ -112,7 +116,13 @@ public sealed class JsonConfigurationStoreTests
         var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
         foreach (var profile in root["configuration"]!["profiles"]!.AsArray())
         {
-            foreach (var button in profile!["additionalButtons"]!.AsArray())
+            var buttons = profile!["additionalButtons"]!.AsArray();
+            while (buttons.Count > 8)
+            {
+                buttons.RemoveAt(buttons.Count - 1);
+            }
+
+            foreach (var button in buttons)
             {
                 button!.AsObject().Remove("virtualKeySequence");
                 button["assignment"]!.AsObject().Remove("keyboardDeviceId");
@@ -125,6 +135,7 @@ public sealed class JsonConfigurationStoreTests
         var loaded = await store.LoadAsync();
 
         Assert.IsNull(loaded.ActiveProfile.AdditionalButtons[0].Assignment.KeyboardDeviceId);
+        Assert.HasCount(16, loaded.ActiveProfile.AdditionalButtons);
         await store.SaveAsync(loaded);
         Assert.IsTrue(File.Exists(paths.ConfigurationFilePath));
     }

@@ -5,9 +5,9 @@
         xmlns:localization="clr-namespace:StreamNumDeck.Wpf.Localization"
         xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
         Title="StreamNumDeck"
-        Width="560" Height="960"
-        MinWidth="560" MaxWidth="560"
-        MinHeight="960" MaxHeight="960"
+        Width="560" Height="1040"
+        MinWidth="480"
+        MinHeight="420"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -49,7 +49,7 @@
                     <TextBlock Text="{Binding Glyph}" FontFamily="{Binding GlyphFontFamily}" FontSize="23" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding GlyphVisibility}" />
                     <Image Source="{Binding CustomIconSource}" Stretch="Uniform" Visibility="{Binding CustomIconVisibility}" />
                 </Grid>
-                <TextBlock Text="{Binding Label}" Margin="0,3,0,0" FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="96" />
+                <TextBlock Text="{Binding Label}" Margin="0,3,0,0" FontSize="12" HorizontalAlignment="Center" TextAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="120" />
             </StackPanel>
         </DataTemplate>
 
@@ -115,7 +115,11 @@
             </Button>
         </Grid>
 
-        <Grid Grid.Row="1">
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      PanningMode="Both">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="58" />
                 <ColumnDefinition Width="*" />
@@ -237,13 +241,13 @@
                         </Grid>
                     </Border>
 
-                    <Border Width="460" Height="650" Margin="0,12,0,0" Padding="10,8,10,10"
+                    <Border Width="460" Height="750" Margin="0,12,0,0" Padding="10,8,10,10"
                             Background="#202020" BorderBrush="#414141" BorderThickness="1" CornerRadius="12">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="28" />
                                 <RowDefinition Height="*" />
-                                <RowDefinition Height="210" />
+                                <RowDefinition Height="330" />
                             </Grid.RowDefinitions>
                             <Grid Margin="2,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
@@ -299,17 +303,18 @@
                             </Grid>
 
                             <Grid Grid.Row="2" Margin="0,2,0,0">
-                                <Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="20"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                                 <TextBlock Text="Additional buttons" Margin="2,0" FontSize="11" VerticalAlignment="Center" />
                                 <ItemsControl Grid.Row="1" ItemsSource="{Binding AdditionalButtons}">
                                 <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate><primitives:UniformGrid Columns="4" Rows="2" /></ItemsPanelTemplate>
+                                    <ItemsPanelTemplate><primitives:UniformGrid Columns="4" Rows="4" /></ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="3,1">
-                                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
+                                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="14"/></Grid.RowDefinitions>
                                             <Button Grid.Row="0" Tag="{Binding Slot}" Click="AdditionalButton_Click"
+                                                    MinHeight="48" VerticalContentAlignment="Center"
                                                     Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding}"
                                                     ContentTemplate="{StaticResource AdditionalButtonTemplate}"
                                                     ToolTip="{Binding Label}">
@@ -335,6 +340,7 @@
                 </StackPanel>
             </Grid>
         </Grid>
+        </ScrollViewer>
 
         <Border Grid.Row="1" Panel.ZIndex="20"
                 Margin="70,10,12,0" Padding="12,10"

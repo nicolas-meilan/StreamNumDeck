@@ -452,6 +452,17 @@ public sealed class DeckRuntimeService : IAsyncDisposable
             mappings.Keys.ToArray(),
             anyKeys.ToArray(),
             cancellationToken).ConfigureAwait(false);
+        var additionalButtonCaptureRules = configuration.ActiveProfile.AdditionalButtons
+            .Where(static button => button.HasKeySequence && button.Assignment.Action is not NoActionDefinition)
+            .SelectMany(static button => button.GetKeySequence()
+                .Select(virtualKeyCode => new AdditionalButtonCaptureRule(
+                    virtualKeyCode,
+                    button.NumLockMode,
+                    CaptureGlobally: string.IsNullOrWhiteSpace(button.Assignment.KeyboardDeviceId))))
+            .ToArray();
+        await keyboardCapture.SetAdditionalButtonCaptureRulesAsync(
+            additionalButtonCaptureRules,
+            cancellationToken).ConfigureAwait(false);
         var hasDeviceSpecificAdditionalButtons = configuration.ActiveProfile.AdditionalButtons.Any(
             static button => button.HasKeySequence
                 && !string.IsNullOrWhiteSpace(button.Assignment.KeyboardDeviceId));
@@ -495,7 +506,7 @@ public sealed class DeckRuntimeService : IAsyncDisposable
         }
 
         var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(false);
-        buttons = configuration.ActiveProfile.AdditionalButtons
+        var configuredButtons = configuration.ActiveProfile.AdditionalButtons
             .Where(button => button.HasKeySequence
                 && (button.Assignment.KeyboardDeviceId is string targetDeviceId
                     ? deviceId is not null && string.Equals(
@@ -508,16 +519,25 @@ public sealed class DeckRuntimeService : IAsyncDisposable
                             : keyboardCapture.SelectedKeyboardDeviceId is not null
                         : isSelectedDevice))
             .ToArray();
-        if (!isSelectedDevice && buttons.Count == 0)
+        if (!isSelectedDevice && configuredButtons.Length == 0)
         {
             return false;
         }
 
         isAdditionalSequenceKey = IsAdditionalSequenceKey(
-            buttons,
+            configuredButtons,
             virtualKeyCode,
             deviceId,
             keyboardCapture.SelectedKeyboardDeviceId);
+        buttons = configuredButtons
+            .Where(button => IsNumLockModeActive(button.NumLockMode, keyboardCapture.IsNumLockOn))
+            .ToArray();
+        if (isAdditionalSequenceKey
+            && !IsAdditionalSequenceKey(buttons, virtualKeyCode, deviceId, keyboardCapture.SelectedKeyboardDeviceId))
+        {
+            return true;
+        }
+
         await additionalInputGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -736,6 +756,15 @@ public sealed class DeckRuntimeService : IAsyncDisposable
                     ? string.Equals(targetDeviceId, deviceId, StringComparison.OrdinalIgnoreCase)
                     : string.Equals(selectedKeyboardDeviceId, deviceId, StringComparison.OrdinalIgnoreCase)))
             && button.GetKeySequence().Contains(virtualKeyCode));
+
+    private static bool IsNumLockModeActive(AdditionalButtonNumLockMode mode, bool isNumLockOn) =>
+        mode switch
+        {
+            AdditionalButtonNumLockMode.Ignore => true,
+            AdditionalButtonNumLockMode.Off => !isNumLockOn,
+            AdditionalButtonNumLockMode.On => isNumLockOn,
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+        };
 
     private static bool HasLongerButtonMatchingPrefix(
         IReadOnlyList<AdditionalButtonSettings> buttons,

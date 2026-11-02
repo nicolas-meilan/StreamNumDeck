@@ -22,7 +22,10 @@ public sealed class DeckKeyTileViewModelTests
     {
         var tile = new AdditionalButtonTileViewModel(0);
 
-        tile.Update([0x08], KeyAssignment.Empty, new StubIconAssetStore());
+        tile.Update(
+            [0x08],
+            KeyAssignment.Empty,
+            new StubIconAssetStore());
 
         Assert.AreEqual("Backspace", tile.KeyLabel);
     }

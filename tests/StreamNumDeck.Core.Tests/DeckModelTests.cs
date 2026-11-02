@@ -52,6 +52,24 @@ public sealed class DeckModelTests
         Assert.AreEqual(IconReference.BuiltIn("broadcast"), profile.Icon);
         Assert.HasCount(AdditionalButtonSettings.Count, profile.AdditionalButtons);
         Assert.IsTrue(profile.AdditionalButtons.All(button => button.VirtualKeyCode is null));
+        Assert.IsTrue(profile.AdditionalButtons.All(button => button.NumLockMode is AdditionalButtonNumLockMode.Ignore));
+    }
+
+    [TestMethod]
+    public void ProfileWithEightAdditionalButtons_AddsEightEmptyButtons()
+    {
+        var legacyButtons = Enumerable.Range(0, 8)
+            .Select(static slot => new AdditionalButtonSettings(slot, null, KeyAssignment.Empty))
+            .ToImmutableArray();
+        var profile = new DeckProfile(
+            Guid.NewGuid(),
+            "Legacy",
+            DeckLayer.CreateEmpty(NumLockLayer.Off),
+            DeckLayer.CreateEmpty(NumLockLayer.On),
+            additionalButtons: legacyButtons);
+
+        Assert.HasCount(16, profile.AdditionalButtons);
+        Assert.IsTrue(profile.AdditionalButtons.Skip(8).All(button => !button.HasKeySequence));
     }
 
     [TestMethod]
@@ -62,7 +80,7 @@ public sealed class DeckModelTests
         var duplicate = profile.Duplicate("copy");
 
         Assert.AreEqual((uint)0x41, duplicate.AdditionalButtons[2].VirtualKeyCode);
-        Assert.AreEqual(8, duplicate.AdditionalButtons.Length);
+        Assert.AreEqual(16, duplicate.AdditionalButtons.Length);
         Assert.AreNotEqual(profile.Id, duplicate.Id);
     }
 

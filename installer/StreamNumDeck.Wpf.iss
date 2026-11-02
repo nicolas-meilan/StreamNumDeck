@@ -1,8 +1,8 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "2.0.1"
+  #define MyAppVersion "2.1.0"
 #endif
 #ifndef MyFileVersion
-  #define MyFileVersion "2.0.1.0"
+  #define MyFileVersion "2.1.0.0"
 #endif
 #ifndef MySourceDir
   #error MySourceDir must point to the portable application directory.

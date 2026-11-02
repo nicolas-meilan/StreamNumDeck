@@ -46,11 +46,17 @@ public sealed record DeckProfile
         NumLockOn = numLockOn;
         Icon = icon ?? IconReference.BuiltIn("broadcast");
         AdditionalButtons = additionalButtons.IsDefault
-            ? Enumerable.Range(0, AdditionalButtonSettings.Count).Select(static slot => new AdditionalButtonSettings(slot, null, KeyAssignment.Empty)).ToImmutableArray()
-            : additionalButtons;
+            ? CreateEmptyAdditionalButtons()
+            : additionalButtons.Length == 8
+                && additionalButtons.Select(static button => button.Slot)
+                    .SequenceEqual(Enumerable.Range(0, 8))
+                    ? additionalButtons.AddRange(
+                        Enumerable.Range(8, AdditionalButtonSettings.Count - 8)
+                            .Select(static slot => new AdditionalButtonSettings(slot, null, KeyAssignment.Empty)))
+                : additionalButtons;
         if (AdditionalButtons.Length != AdditionalButtonSettings.Count
             || !AdditionalButtons.Select(static button => button.Slot).OrderBy(static slot => slot).SequenceEqual(Enumerable.Range(0, AdditionalButtonSettings.Count)))
-            throw new ArgumentException("A profile must contain exactly eight additional buttons.", nameof(additionalButtons));
+            throw new ArgumentException($"A profile must contain exactly {AdditionalButtonSettings.Count} additional buttons.", nameof(additionalButtons));
         if (AdditionalButtons.Any(static button =>
                 button.GetKeySequence().Length > AdditionalButtonSettings.MaximumKeySequenceLength))
             throw new ArgumentException("Additional button key sequences cannot exceed four keys.", nameof(additionalButtons));
@@ -75,6 +81,11 @@ public sealed record DeckProfile
         DeckLayer.CreateEmpty(NumLockLayer.Off),
         DeckLayer.CreateEmpty(NumLockLayer.On),
         icon);
+
+    private static ImmutableArray<AdditionalButtonSettings> CreateEmptyAdditionalButtons() =>
+        Enumerable.Range(0, AdditionalButtonSettings.Count)
+            .Select(static slot => new AdditionalButtonSettings(slot, null, KeyAssignment.Empty))
+            .ToImmutableArray();
 
     public DeckLayer GetLayer(NumLockLayer layer) => layer is NumLockLayer.On ? NumLockOn : NumLockOff;
 

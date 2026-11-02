@@ -532,7 +532,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public async Task UpdateAdditionalButtonAsync(
         int slot,
         IReadOnlyList<uint>? virtualKeySequence = null,
-        KeyAssignment? assignment = null)
+        KeyAssignment? assignment = null,
+        AdditionalButtonNumLockMode? numLockMode = null)
     {
         var profileId = SelectedProfile?.Id ?? throw new InvalidOperationException("No profile is selected.");
         var configuration = await configurationService.UpdateAsync(current =>
@@ -543,6 +544,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 button = button.WithKeySequence(virtualKeySequence);
             if (assignment is not null)
                 button = button.WithAssignment(assignment);
+            if (numLockMode is AdditionalButtonNumLockMode mode)
+                button = button with { NumLockMode = mode };
             return current.ReplaceProfile(profile.WithAdditionalButton(button));
         }).ConfigureAwait(true);
         await RefreshPreloadedSoundsAsync(configuration).ConfigureAwait(true);

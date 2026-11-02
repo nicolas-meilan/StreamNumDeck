@@ -89,6 +89,7 @@ public partial class KeyEditorWindow : Window
     private readonly ObservableCollection<AutomationStepItem> automationSteps = new();
     private readonly bool actionOnlyMode;
     private readonly bool allowAppearanceEditing;
+    private readonly bool additionalButtonMode;
     private IReadOnlyList<KeyboardDeviceInfo> availableKeyboards = [];
     private string? keyboardDeviceId;
     private bool currentUsesAnyKeyboard;
@@ -114,7 +115,9 @@ public partial class KeyEditorWindow : Window
         Func<CancellationToken, Task> stopSounds,
         bool actionOnlyMode = false,
         bool allowAppearanceEditing = false,
-        Func<CancellationToken, Task<IReadOnlyList<KeyboardDeviceInfo>>>? getAvailableKeyboards = null)
+        Func<CancellationToken, Task<IReadOnlyList<KeyboardDeviceInfo>>>? getAvailableKeyboards = null,
+        bool additionalButtonMode = false,
+        AdditionalButtonNumLockMode additionalButtonNumLockMode = AdditionalButtonNumLockMode.Ignore)
     {
         this.importIcon = importIcon;
         this.resolveIconPath = resolveIconPath;
@@ -129,7 +132,14 @@ public partial class KeyEditorWindow : Window
         this.getAvailableKeyboards = getAvailableKeyboards;
         this.actionOnlyMode = actionOnlyMode;
         this.allowAppearanceEditing = allowAppearanceEditing;
+        this.additionalButtonMode = additionalButtonMode;
         InitializeComponent();
+        if (additionalButtonMode)
+        {
+            CopyOtherLayerButton.Visibility = Visibility.Collapsed;
+            AdditionalButtonNumLockSection.Visibility = Visibility.Visible;
+            AdditionalButtonNumLockComboBox.SelectedValue = additionalButtonNumLockMode;
+        }
         KeyboardSelectionSection.Visibility = getAvailableKeyboards is null
             ? Visibility.Collapsed
             : Visibility.Visible;
@@ -186,6 +196,9 @@ public partial class KeyEditorWindow : Window
     }
 
     public KeyAssignment Assignment { get; private set; } = KeyAssignment.Empty;
+
+    public AdditionalButtonNumLockMode AdditionalButtonMode { get; private set; } =
+        AdditionalButtonNumLockMode.Ignore;
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -651,6 +664,12 @@ public partial class KeyEditorWindow : Window
                     : selectedKeyboardDeviceId,
                 UseAnyKeyboard = useAnyKeyboard,
             };
+            if (additionalButtonMode)
+            {
+                AdditionalButtonMode = AdditionalButtonNumLockComboBox.SelectedValue is AdditionalButtonNumLockMode mode
+                    ? mode
+                    : throw new InvalidOperationException("Select a NumLock behavior for this additional button.");
+            }
             DialogResult = true;
         }
         catch (Exception exception)

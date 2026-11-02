@@ -2,12 +2,20 @@ using System.Collections.Immutable;
 
 namespace StreamNumDeck.Core.Deck;
 
+public enum AdditionalButtonNumLockMode
+{
+    Ignore,
+    Off,
+    On,
+}
+
 public sealed record AdditionalButtonSettings(int Slot, uint? VirtualKeyCode, KeyAssignment Assignment)
 {
-    public const int Count = 8;
+    public const int Count = 16;
     public const int MaximumKeySequenceLength = 4;
 
     private ImmutableArray<uint> virtualKeySequence = ImmutableArray<uint>.Empty;
+    private AdditionalButtonNumLockMode numLockMode = AdditionalButtonNumLockMode.Ignore;
 
     public ImmutableArray<uint> VirtualKeySequence
     {
@@ -16,6 +24,20 @@ public sealed record AdditionalButtonSettings(int Slot, uint? VirtualKeyCode, Ke
     }
 
     public bool HasKeySequence => !VirtualKeySequence.IsDefaultOrEmpty || VirtualKeyCode.HasValue;
+
+    public AdditionalButtonNumLockMode NumLockMode
+    {
+        get => numLockMode;
+        init
+        {
+            if (!Enum.IsDefined(typeof(AdditionalButtonNumLockMode), value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown additional button NumLock mode.");
+            }
+
+            numLockMode = value;
+        }
+    }
 
     public ImmutableArray<uint> GetKeySequence() =>
         !VirtualKeySequence.IsDefaultOrEmpty

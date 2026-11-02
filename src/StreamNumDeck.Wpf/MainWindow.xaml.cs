@@ -29,6 +29,14 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        var workArea = SystemParameters.WorkArea;
+        MinWidth = Math.Min(480, workArea.Width);
+        MinHeight = Math.Min(420, workArea.Height);
+        Width = Math.Min(Width, workArea.Width);
+        Height = Math.Min(Height, workArea.Height);
+        Left = workArea.Left + (workArea.Width - Width) / 2;
+        Top = workArea.Top + (workArea.Height - Height) / 2;
+
         try
         {
             await viewModel.InitializeAsync();
@@ -291,14 +299,20 @@ public partial class MainWindow : Window
 
     private async Task OpenAdditionalButtonEditorAsync(int slot, KeyAssignment assignment)
     {
+        var numLockMode = viewModel.SelectedProfile!.AdditionalButtons[slot].NumLockMode;
         var editor = new KeyEditorWindow(DeckKey.Insert, assignment, KeyAssignment.Empty,
             viewModel.ImportIconAsync, viewModel.ResolveIconPath, viewModel.GetObsCatalogAsync,
             viewModel.GetVTubeStudioCatalogAsync, viewModel.IsVTubeStudioAuthorizedAsync,
             OpenVTubeStudioSettings, viewModel.GetAudioApplicationsAsync, viewModel.PreviewSoundAsync,
             viewModel.StopSoundsAsync, actionOnlyMode: true, allowAppearanceEditing: true,
-            getAvailableKeyboards: viewModel.GetAvailableKeyboardsAsync) { Owner = this };
+            getAvailableKeyboards: viewModel.GetAvailableKeyboardsAsync,
+            additionalButtonMode: true,
+            additionalButtonNumLockMode: numLockMode) { Owner = this };
         if (editor.ShowDialog() == true)
-            await viewModel.UpdateAdditionalButtonAsync(slot, assignment: editor.Assignment);
+            await viewModel.UpdateAdditionalButtonAsync(
+                slot,
+                assignment: editor.Assignment,
+                numLockMode: editor.AdditionalButtonMode);
     }
 
     private async void AdditionalButtonEditKey_Click(object sender, RoutedEventArgs e)

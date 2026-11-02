@@ -161,6 +161,70 @@ public sealed class DeckRuntimeServiceTests
     }
 
     [TestMethod]
+    public async Task AdditionalButton_OnlyRunsInConfiguredNumLockMode()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var offButton = new AdditionalButtonSettings(0, 0x41,
+            new KeyAssignment("Off", IconReference.BuiltIn("play"), new OpenPathActionDefinition("off")))
+        {
+            NumLockMode = AdditionalButtonNumLockMode.Off,
+        };
+        var onButton = new AdditionalButtonSettings(1, 0x42,
+            new KeyAssignment("On", IconReference.BuiltIn("play"), new OpenPathActionDefinition("on")))
+        {
+            NumLockMode = AdditionalButtonNumLockMode.On,
+        };
+        var anyButton = new AdditionalButtonSettings(2, 0x43,
+            new KeyAssignment("Any", IconReference.BuiltIn("play"), new OpenPathActionDefinition("any")));
+        var profile = configuration.ActiveProfile
+            .WithAdditionalButton(offButton)
+            .WithAdditionalButton(onButton)
+            .WithAdditionalButton(anyButton);
+        configuration = configuration.ReplaceProfile(profile);
+        using var configurationService = new ConfigurationService(new InMemoryConfigurationStore(configuration));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(configurationService, capture, new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await runtime.StartAsync();
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    new AdditionalButtonCaptureRule(0x41, AdditionalButtonNumLockMode.Off, CaptureGlobally: true),
+                    new AdditionalButtonCaptureRule(0x42, AdditionalButtonNumLockMode.On, CaptureGlobally: true),
+                    new AdditionalButtonCaptureRule(0x43, AdditionalButtonNumLockMode.Ignore, CaptureGlobally: true),
+                },
+                capture.AdditionalButtonCaptureRules.ToArray());
+
+            capture.PublishRawInput(0x41, isSelectedDevice: true);
+            capture.PublishRawInput(0x42, isSelectedDevice: true);
+            capture.PublishRawInput(0x43, isSelectedDevice: true);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 2);
+            capture.PublishRawInput(0x41, isSelectedDevice: true, isKeyDown: false);
+            capture.PublishRawInput(0x42, isSelectedDevice: true, isKeyDown: false);
+            capture.PublishRawInput(0x43, isSelectedDevice: true, isKeyDown: false);
+
+            await capture.SetNumLockAsync(true);
+            capture.PublishRawInput(0x41, isSelectedDevice: true);
+            capture.PublishRawInput(0x42, isSelectedDevice: true);
+            capture.PublishRawInput(0x43, isSelectedDevice: true);
+            capture.PublishRawInput(0x41, isSelectedDevice: true, isKeyDown: false);
+            capture.PublishRawInput(0x42, isSelectedDevice: true, isKeyDown: false);
+            capture.PublishRawInput(0x43, isSelectedDevice: true, isKeyDown: false);
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 4);
+            await Task.Delay(100);
+
+            CollectionAssert.AreEquivalent(new[] { "off", "any", "on", "any" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public async Task AdditionalButton_OnlyRespondsToItsSelectedKeyboard()
     {
         var configuration = AppConfiguration.CreateDefault();
@@ -185,6 +249,9 @@ public sealed class DeckRuntimeServiceTests
             await capture.SetSelectedKeyboardDeviceAsync(null);
             await runtime.StartAsync();
             Assert.IsTrue(capture.AdditionalButtonDeviceRoutingEnabled);
+            CollectionAssert.AreEqual(
+                new[] { new AdditionalButtonCaptureRule(0x41, AdditionalButtonNumLockMode.Ignore, CaptureGlobally: false) },
+                capture.AdditionalButtonCaptureRules.ToArray());
 
             capture.PublishRawInput(
                 0x41,
@@ -593,7 +660,7 @@ public sealed class DeckRuntimeServiceTests
 
         public KeyboardCaptureState State { get; private set; }
 
-        public bool IsNumLockOn => false;
+        public bool IsNumLockOn { get; private set; }
 
         public KeyboardCaptureTargets CaptureTargets { get; private set; } = KeyboardCaptureTargets.All;
 
@@ -609,8 +676,9 @@ public sealed class DeckRuntimeServiceTests
 
         public bool AdditionalButtonDeviceRoutingEnabled { get; private set; }
 
-        public NumLockBehavior NumLockBehavior { get; private set; } = NumLockBehavior.SwitchLayers;
+        public IReadOnlyCollection<AdditionalButtonCaptureRule> AdditionalButtonCaptureRules { get; private set; } = [];
 
+        public NumLockBehavior NumLockBehavior { get; private set; } = NumLockBehavior.SwitchLayers;
         public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
         public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
@@ -685,6 +753,14 @@ public sealed class DeckRuntimeServiceTests
             return Task.CompletedTask;
         }
 
+        public Task SetAdditionalButtonCaptureRulesAsync(
+            IReadOnlyCollection<AdditionalButtonCaptureRule> rules,
+            CancellationToken cancellationToken = default)
+        {
+            AdditionalButtonCaptureRules = rules.ToArray();
+            return Task.CompletedTask;
+        }
+
         public Task SetDeviceIdentificationKeysAsync(
             IReadOnlyCollection<DeckKey> numLockOffKeys,
             IReadOnlyCollection<DeckKey> numLockOnKeys,
@@ -697,6 +773,7 @@ public sealed class DeckRuntimeServiceTests
 
         public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default)
         {
+            IsNumLockOn = isOn;
             NumLockStateChanged?.Invoke(this, new NumLockStateChangedEventArgs(isOn));
             return Task.CompletedTask;
         }
