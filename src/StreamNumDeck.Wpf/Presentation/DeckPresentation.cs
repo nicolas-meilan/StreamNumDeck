@@ -18,7 +18,6 @@ internal static class DeckPresentation
         DeckKey.NumpadAdd => "+",
         DeckKey.NumpadEnter => "Enter",
         DeckKey.NumpadDecimal => ".",
-        DeckKey.NumpadBack => "Back",
         DeckKey.Numpad0 => "0",
         DeckKey.Numpad1 => "1",
         DeckKey.Numpad2 => "2",

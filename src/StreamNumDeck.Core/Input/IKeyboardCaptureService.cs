@@ -42,6 +42,10 @@ public interface IKeyboardCaptureService : IAsyncDisposable
         IReadOnlyCollection<DeckKey> anyKeyboardKeys,
         CancellationToken cancellationToken = default);
 
+    Task SetAdditionalButtonDeviceRoutingAsync(
+        bool isEnabled,
+        CancellationToken cancellationToken = default);
+
     Task SetDeviceIdentificationKeysAsync(
         IReadOnlyCollection<DeckKey> numLockOffKeys,
         IReadOnlyCollection<DeckKey> numLockOnKeys,

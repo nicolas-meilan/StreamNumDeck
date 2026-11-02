@@ -290,7 +290,8 @@ public partial class MainWindow : Window
             viewModel.ImportIconAsync, viewModel.ResolveIconPath, viewModel.GetObsCatalogAsync,
             viewModel.GetVTubeStudioCatalogAsync, viewModel.IsVTubeStudioAuthorizedAsync,
             OpenVTubeStudioSettings, viewModel.GetAudioApplicationsAsync, viewModel.PreviewSoundAsync,
-            viewModel.StopSoundsAsync, actionOnlyMode: true, allowAppearanceEditing: true) { Owner = this };
+            viewModel.StopSoundsAsync, actionOnlyMode: true, allowAppearanceEditing: true,
+            getAvailableKeyboards: viewModel.GetAvailableKeyboardsAsync) { Owner = this };
         if (editor.ShowDialog() == true)
             await viewModel.UpdateAdditionalButtonAsync(slot, assignment: editor.Assignment);
     }

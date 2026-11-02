@@ -31,10 +31,10 @@ public sealed class DeckModelTests
     }
 
     [TestMethod]
-    public void AssignableKeyCatalog_ContainsTwentyThreeUniquePhysicalKeys()
+    public void AssignableKeyCatalog_ContainsTwentyTwoUniquePhysicalKeys()
     {
-        Assert.HasCount(23, DeckKeyCatalog.AssignableKeys);
-        Assert.HasCount(23, DeckKeyCatalog.AssignableKeys.Distinct());
+        Assert.HasCount(22, DeckKeyCatalog.AssignableKeys);
+        Assert.HasCount(22, DeckKeyCatalog.AssignableKeys.Distinct());
     }
 
     [TestMethod]
@@ -44,8 +44,8 @@ public sealed class DeckModelTests
 
         Assert.AreEqual(NumLockLayer.Off, profile.NumLockOff.Mode);
         Assert.AreEqual(NumLockLayer.On, profile.NumLockOn.Mode);
-        Assert.HasCount(23, profile.NumLockOff.Assignments);
-        Assert.HasCount(23, profile.NumLockOn.Assignments);
+        Assert.HasCount(22, profile.NumLockOff.Assignments);
+        Assert.HasCount(22, profile.NumLockOn.Assignments);
         Assert.AreEqual(IconReference.BuiltIn("broadcast"), profile.Icon);
         Assert.HasCount(AdditionalButtonSettings.Count, profile.AdditionalButtons);
         Assert.IsTrue(profile.AdditionalButtons.All(button => button.VirtualKeyCode is null));

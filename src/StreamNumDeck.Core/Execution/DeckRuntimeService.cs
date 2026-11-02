@@ -16,9 +16,11 @@ public sealed class DeckRuntimeService : IAsyncDisposable
     private readonly object runningActionsGate = new();
     private readonly object additionalKeySequenceGate = new();
     private readonly HashSet<Task> runningActions = new();
-    private readonly HashSet<uint> pressedAdditionalKeys = [];
+    private readonly HashSet<AdditionalKeyIdentity> pressedAdditionalKeys = [];
     private readonly List<uint> pendingAdditionalKeys = [];
     private readonly List<CapturedKeyPress?> pendingAdditionalKeyPresses = [];
+    private IReadOnlyList<AdditionalButtonSettings> pendingAdditionalButtons = [];
+    private string? pendingAdditionalInputDeviceId;
     private CancellationTokenSource? processingCancellation;
     private CancellationTokenSource? additionalKeySequenceTimeout;
     private Task? processingTask;
@@ -220,7 +222,11 @@ public sealed class DeckRuntimeService : IAsyncDisposable
                     var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(false);
                     var profile = configuration.Profiles.Single(profile => profile.Id == configuration.ActiveProfileId);
                     if (keyPress.VirtualKeyCode is uint virtualKeyCode
-                        && IsAdditionalSequenceKey(profile.AdditionalButtons, virtualKeyCode))
+                        && IsAdditionalSequenceKey(
+                            profile.AdditionalButtons,
+                            virtualKeyCode,
+                            keyPress.DeviceId,
+                            keyboardCapture.SelectedKeyboardDeviceId))
                     {
                         continue;
                     }
@@ -262,6 +268,27 @@ public sealed class DeckRuntimeService : IAsyncDisposable
         var cancellation = processingCancellation;
         if (cancellation is null)
         {
+            return;
+        }
+
+        try
+        {
+            if (await HandleAdditionalButtonInputAsync(
+                e.VirtualKeyCode,
+                e.IsKeyDown,
+                e.CapturedKeyPress,
+                e.DeviceId,
+                e.IsSelectedDevice,
+                allowFallbackKeyPresses: e.IsSelectedDevice,
+                cancellation.Token).ConfigureAwait(false))
+            {
+                return;
+            }
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            ActionExecutionFailed?.Invoke(this, new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
             return;
         }
 
@@ -336,24 +363,6 @@ public sealed class DeckRuntimeService : IAsyncDisposable
             }
         }
 
-        if (!e.IsSelectedDevice)
-        {
-            return;
-        }
-
-        try
-        {
-            await HandleAdditionalButtonInputAsync(
-                e.VirtualKeyCode,
-                e.IsKeyDown,
-                e.CapturedKeyPress,
-                cancellation.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
-        catch (Exception exception)
-        {
-            ActionExecutionFailed?.Invoke(this, new ActionExecutionFailedEventArgs(new NoActionDefinition(), exception));
-        }
     }
 
     private async void KeyboardCapture_KeyboardInputObserved(object? sender, KeyboardInputObservedEventArgs e)
@@ -370,6 +379,9 @@ public sealed class DeckRuntimeService : IAsyncDisposable
                 e.VirtualKeyCode,
                 e.IsKeyDown,
                 e.CapturedKeyPress,
+                deviceId: null,
+                isSelectedDevice: true,
+                allowFallbackKeyPresses: true,
                 cancellation.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
@@ -407,7 +419,7 @@ public sealed class DeckRuntimeService : IAsyncDisposable
     private void KeyboardCapture_CaptureError(object? sender, KeyboardCaptureErrorEventArgs e) =>
         captureError?.Invoke(this, e);
 
-    private Task UpdateDeviceSpecificKeysAsync(
+    private async Task UpdateDeviceSpecificKeysAsync(
         AppConfiguration configuration,
         CancellationToken cancellationToken = default)
     {
@@ -425,57 +437,134 @@ public sealed class DeckRuntimeService : IAsyncDisposable
             .ToImmutableHashSet();
         Volatile.Write(ref deviceSpecificKeyboardIds, mappings);
         Volatile.Write(ref anyKeyboardKeys, anyKeys);
-        return keyboardCapture.SetKeyboardRoutedKeysAsync(mappings.Keys.ToArray(), anyKeys.ToArray(), cancellationToken);
+        await keyboardCapture.SetKeyboardRoutedKeysAsync(
+            mappings.Keys.ToArray(),
+            anyKeys.ToArray(),
+            cancellationToken).ConfigureAwait(false);
+        var hasDeviceSpecificAdditionalButtons = configuration.ActiveProfile.AdditionalButtons.Any(
+            static button => button.HasKeySequence
+                && !string.IsNullOrWhiteSpace(button.Assignment.KeyboardDeviceId));
+        await keyboardCapture.SetAdditionalButtonDeviceRoutingAsync(
+            hasDeviceSpecificAdditionalButtons,
+            cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task HandleAdditionalButtonInputAsync(
+    private async Task<bool> HandleAdditionalButtonInputAsync(
         uint virtualKeyCode,
         bool isKeyDown,
         CapturedKeyPress? capturedKeyPress,
+        string? deviceId,
+        bool isSelectedDevice,
+        bool allowFallbackKeyPresses,
         CancellationToken cancellationToken)
     {
         List<AdditionalButtonSettings> matches = [];
         List<CapturedKeyPress> fallbackKeyPresses = [];
-        IReadOnlyList<AdditionalButtonSettings> buttons = [];
+        IReadOnlyList<AdditionalButtonSettings> buttons;
         CancellationTokenSource? timeoutSource = null;
+        var isAdditionalSequenceKey = false;
+        var inputIdentity = new AdditionalKeyIdentity(deviceId, virtualKeyCode);
+
+        if (!isKeyDown)
+        {
+            await additionalInputGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                lock (additionalKeySequenceGate)
+                {
+                    pressedAdditionalKeys.Remove(inputIdentity);
+                }
+            }
+            finally
+            {
+                additionalInputGate.Release();
+            }
+
+            return false;
+        }
+
+        var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(false);
+        buttons = configuration.ActiveProfile.AdditionalButtons
+            .Where(button => button.HasKeySequence
+                && (button.Assignment.KeyboardDeviceId is string targetDeviceId
+                    ? deviceId is not null && string.Equals(
+                        targetDeviceId,
+                        deviceId,
+                        StringComparison.OrdinalIgnoreCase)
+                    : button.Assignment.UseAnyKeyboard
+                        ? deviceId is null
+                            ? keyboardCapture.SelectedKeyboardDeviceId is null
+                            : keyboardCapture.SelectedKeyboardDeviceId is not null
+                        : isSelectedDevice))
+            .ToArray();
+        if (!isSelectedDevice && buttons.Count == 0)
+        {
+            return false;
+        }
+
+        isAdditionalSequenceKey = IsAdditionalSequenceKey(
+            buttons,
+            virtualKeyCode,
+            deviceId,
+            keyboardCapture.SelectedKeyboardDeviceId);
         await additionalInputGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             lock (additionalKeySequenceGate)
             {
-                if (!isKeyDown)
+                if (!pressedAdditionalKeys.Add(inputIdentity)
+                    || !keyboardCapture.CaptureTargets.Includes(KeyboardCaptureTargets.Numpad)
+                    || Volatile.Read(ref additionalKeyCaptureMode) != 0
+                    || cancellationToken.IsCancellationRequested)
                 {
-                    pressedAdditionalKeys.Remove(virtualKeyCode);
+                    return false;
                 }
-                else
-                {
-                    if (!pressedAdditionalKeys.Add(virtualKeyCode)
-                        || !keyboardCapture.CaptureTargets.Includes(KeyboardCaptureTargets.Numpad)
-                        || Volatile.Read(ref additionalKeyCaptureMode) != 0
-                        || cancellationToken.IsCancellationRequested)
-                    {
-                        return;
-                    }
 
-                    CancelAdditionalKeySequenceTimeout();
-                }
+                CancelAdditionalKeySequenceTimeout();
             }
-
-            if (!isKeyDown)
-            {
-                return;
-            }
-
-            var configuration = await configurationService.GetAsync(cancellationToken).ConfigureAwait(false);
-            buttons = configuration.ActiveProfile.AdditionalButtons
-                .Where(static button => button.HasKeySequence)
-                .ToArray();
             lock (additionalKeySequenceGate)
             {
+                if (pendingAdditionalKeys.Count > 0
+                    && !string.Equals(
+                        pendingAdditionalInputDeviceId,
+                        deviceId,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    var completedPrefix = FindLongestCompletedPrefix(
+                        pendingAdditionalButtons,
+                        pendingAdditionalKeys);
+                    var consumedKeyCount = completedPrefix?.Length ?? 0;
+                    if (completedPrefix is not null)
+                    {
+                        matches.Add(completedPrefix.Value.Button);
+                    }
+
+                    for (var index = consumedKeyCount; index < pendingAdditionalKeyPresses.Count; index++)
+                    {
+                        if (pendingAdditionalKeyPresses[index] is CapturedKeyPress fallbackKeyPress)
+                        {
+                            fallbackKeyPresses.Add(fallbackKeyPress);
+                        }
+                    }
+
+                    pendingAdditionalKeys.Clear();
+                    pendingAdditionalKeyPresses.Clear();
+                    pendingAdditionalButtons = [];
+                    pendingAdditionalInputDeviceId = null;
+                    CancelAdditionalKeySequenceTimeout();
+                }
+
+                if (pendingAdditionalKeys.Count == 0)
+                {
+                    pendingAdditionalInputDeviceId = deviceId;
+                    pendingAdditionalButtons = buttons;
+                }
+
                 pendingAdditionalKeys.Add(virtualKeyCode);
                 pendingAdditionalKeyPresses.Add(
                     capturedKeyPress is CapturedKeyPress keyPress
-                        && IsAdditionalSequenceKey(buttons, virtualKeyCode)
+                        && allowFallbackKeyPresses
+                        && isAdditionalSequenceKey
                             ? keyPress
                             : null);
 
@@ -493,6 +582,8 @@ public sealed class DeckRuntimeService : IAsyncDisposable
                         matches.Add(matchingButton);
                         pendingAdditionalKeys.Clear();
                         pendingAdditionalKeyPresses.Clear();
+                        pendingAdditionalButtons = [];
+                        pendingAdditionalInputDeviceId = null;
                         CancelAdditionalKeySequenceTimeout();
                         break;
                     }
@@ -506,7 +597,8 @@ public sealed class DeckRuntimeService : IAsyncDisposable
                     }
                     else
                     {
-                        if (pendingAdditionalKeyPresses[0] is CapturedKeyPress fallbackKeyPress)
+                        if (allowFallbackKeyPresses
+                            && pendingAdditionalKeyPresses[0] is CapturedKeyPress fallbackKeyPress)
                         {
                             fallbackKeyPresses.Add(fallbackKeyPress);
                         }
@@ -518,6 +610,8 @@ public sealed class DeckRuntimeService : IAsyncDisposable
 
                 if (pendingAdditionalKeys.Count == 0)
                 {
+                    pendingAdditionalButtons = [];
+                    pendingAdditionalInputDeviceId = null;
                     CancelAdditionalKeySequenceTimeout();
                 }
 
@@ -547,6 +641,8 @@ public sealed class DeckRuntimeService : IAsyncDisposable
         {
             await ExecuteAdditionalButtonAsync(button.Slot, cancellationToken).ConfigureAwait(false);
         }
+
+        return isAdditionalSequenceKey;
     }
 
     private async Task FlushAdditionalKeySequenceAfterTimeoutAsync(
@@ -580,6 +676,8 @@ public sealed class DeckRuntimeService : IAsyncDisposable
 
                 pendingAdditionalKeys.Clear();
                 pendingAdditionalKeyPresses.Clear();
+                pendingAdditionalButtons = [];
+                pendingAdditionalInputDeviceId = null;
             }
 
             if (match is not null)
@@ -616,10 +714,16 @@ public sealed class DeckRuntimeService : IAsyncDisposable
 
     private static bool IsAdditionalSequenceKey(
         IReadOnlyList<AdditionalButtonSettings> buttons,
-        uint virtualKeyCode) =>
+        uint virtualKeyCode,
+        string? deviceId,
+        string? selectedKeyboardDeviceId) =>
         buttons.Any(button =>
             button.HasKeySequence
             && button.Assignment.Action is not NoActionDefinition
+            && (button.Assignment.UseAnyKeyboard
+                || (button.Assignment.KeyboardDeviceId is string targetDeviceId
+                    ? string.Equals(targetDeviceId, deviceId, StringComparison.OrdinalIgnoreCase)
+                    : string.Equals(selectedKeyboardDeviceId, deviceId, StringComparison.OrdinalIgnoreCase)))
             && button.GetKeySequence().Contains(virtualKeyCode));
 
     private static bool HasLongerButtonMatchingPrefix(
@@ -667,6 +771,8 @@ public sealed class DeckRuntimeService : IAsyncDisposable
         {
             pendingAdditionalKeys.Clear();
             pendingAdditionalKeyPresses.Clear();
+            pendingAdditionalButtons = [];
+            pendingAdditionalInputDeviceId = null;
             pressedAdditionalKeys.Clear();
             CancelAdditionalKeySequenceTimeout();
         }
@@ -674,9 +780,12 @@ public sealed class DeckRuntimeService : IAsyncDisposable
 
     private void CancelAdditionalKeySequenceTimeout()
     {
-        var timeoutSource = additionalKeySequenceTimeout;
-        additionalKeySequenceTimeout = null;
-        timeoutSource?.Cancel();
+        lock (additionalKeySequenceGate)
+        {
+            var timeoutSource = additionalKeySequenceTimeout;
+            additionalKeySequenceTimeout = null;
+            timeoutSource?.Cancel();
+        }
     }
 
     private async Task ExecuteAdditionalButtonAsync(int slot, CancellationToken cancellationToken)
@@ -758,4 +867,6 @@ public sealed class DeckRuntimeService : IAsyncDisposable
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
     }
+
+    private readonly record struct AdditionalKeyIdentity(string? DeviceId, uint VirtualKeyCode);
 }

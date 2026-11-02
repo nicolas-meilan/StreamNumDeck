@@ -48,9 +48,7 @@ public sealed class KeyboardScanCodeTranslatorTests
 
         CollectionAssert.AreEquivalent(
             DeckKeyCatalog.AssignableKeys.ToArray(),
-            cases.Select(testCase => testCase.Key)
-                .Append(DeckKey.NumpadBack)
-                .ToArray());
+            cases.Select(testCase => testCase.Key).ToArray());
     }
 
     [TestMethod]
@@ -64,13 +62,10 @@ public sealed class KeyboardScanCodeTranslatorTests
     }
 
     [TestMethod]
-    public void TranslatesObservedNumpadBackSignatureWithoutMappingTheOtherObservedKey()
+    public void DoesNotTranslateBackspaceAsAnAssignableDeckKey()
     {
-        Assert.IsTrue(KeyboardScanCodeTranslator.TryTranslate(0x08, 0x0E, false, out var keypadBack));
-        Assert.IsFalse(KeyboardScanCodeTranslator.TryTranslate(0x7B, 0x58, false, out _));
         Assert.IsFalse(KeyboardScanCodeTranslator.TryTranslate(0x0E, false, out _));
-
-        Assert.AreEqual(DeckKey.NumpadBack, keypadBack);
+        Assert.IsFalse(KeyboardScanCodeTranslator.TryTranslate(0x58, false, out _));
     }
 
     [TestMethod]

@@ -90,10 +90,10 @@ public sealed class DeckRuntimeServiceTests
     }
 
     [TestMethod]
-    public async Task AdditionalButton_RespectsNumpadCaptureToggleAndRunsGloballyWhenEnabled()
+    public async Task AdditionalButton_CanUseBackspaceAndRespectsNumpadCaptureToggle()
     {
         var configuration = AppConfiguration.CreateDefault();
-        var additional = new AdditionalButtonSettings(0, 0x41,
+        var additional = new AdditionalButtonSettings(0, 0x08,
             new KeyAssignment("Extra", IconReference.BuiltIn("play"), new OpenPathActionDefinition("extra")));
         configuration = configuration.ReplaceProfile(configuration.ActiveProfile.WithAdditionalButton(additional));
         using var configurationService = new ConfigurationService(new InMemoryConfigurationStore(configuration));
@@ -105,18 +105,110 @@ public sealed class DeckRuntimeServiceTests
         {
             await runtime.StartAsync();
             await capture.SetCaptureTargetsAsync(KeyboardCaptureTargets.None);
-            capture.PublishObservedInput(0x41, 0x1E, isExtended: false);
-            capture.PublishObservedInput(0x41, 0x1E, isExtended: false, isKeyDown: false);
+            capture.PublishObservedInput(0x08, 0x0E, isExtended: false);
+            capture.PublishObservedInput(0x08, 0x0E, isExtended: false, isKeyDown: false);
             await Task.Delay(100);
             Assert.AreEqual(0, executor.StartCount, "An additional key must be ignored while NumPad capture is disabled.");
 
             await capture.SetCaptureTargetsAsync(KeyboardCaptureTargets.Numpad);
-            capture.PublishObservedInput(0x41, 0x1E, isExtended: false);
+            capture.PublishObservedInput(0x08, 0x0E, isExtended: false);
             await WaitWithTimeoutAsync(executor.FirstStarted.Task);
+            capture.PublishObservedInput(0x08, 0x0E, isExtended: false, isKeyDown: false);
         }
         finally
         {
             executor.ReleaseFirst.TrySetResult(true);
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task AdditionalButton_OnlyRespondsToItsSelectedKeyboard()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var additionalButton = new AdditionalButtonSettings(0, 0x41,
+            new KeyAssignment("Extra", IconReference.BuiltIn("play"), new OpenPathActionDefinition("extra"))
+            {
+                KeyboardDeviceId = "additional-keyboard",
+            });
+        configuration = configuration.ReplaceProfile(
+            configuration.ActiveProfile.WithAdditionalButton(additionalButton));
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync(null);
+            await runtime.StartAsync();
+            Assert.IsTrue(capture.AdditionalButtonDeviceRoutingEnabled);
+
+            capture.PublishRawInput(
+                0x41,
+                isSelectedDevice: false,
+                deviceId: "additional-keyboard");
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 1);
+            capture.PublishRawInput(
+                0x41,
+                isSelectedDevice: false,
+                isKeyDown: false,
+                deviceId: "additional-keyboard");
+
+            capture.PublishRawInput(0x41, isSelectedDevice: true, deviceId: "global-keyboard");
+            capture.PublishRawInput(
+                0x41,
+                isSelectedDevice: true,
+                isKeyDown: false,
+                deviceId: "global-keyboard");
+            await Task.Delay(100);
+
+            CollectionAssert.AreEqual(new[] { "extra" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
+            await runtime.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    public async Task AdditionalButton_CanRespondToAnyKeyboard()
+    {
+        var configuration = AppConfiguration.CreateDefault();
+        var additionalButton = new AdditionalButtonSettings(0, 0x41,
+            new KeyAssignment("Extra", IconReference.BuiltIn("play"), new OpenPathActionDefinition("extra"))
+            {
+                UseAnyKeyboard = true,
+            });
+        configuration = configuration.ReplaceProfile(
+            configuration.ActiveProfile.WithAdditionalButton(additionalButton));
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new SequenceRecordingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await capture.SetSelectedKeyboardDeviceAsync("global-keyboard");
+            await runtime.StartAsync();
+
+            capture.PublishRawInput(
+                0x41,
+                isSelectedDevice: false,
+                deviceId: "another-keyboard");
+            await WaitUntilAsync(() => executor.ExecutedPaths.Count == 1);
+            CollectionAssert.AreEqual(new[] { "extra" }, executor.ExecutedPaths.ToArray());
+        }
+        finally
+        {
             await runtime.DisposeAsync();
         }
     }
@@ -155,7 +247,7 @@ public sealed class DeckRuntimeServiceTests
             capture.PublishRawInput(0x61, isSelectedDevice: false);
             Assert.AreEqual(0, executor.ExecutedPaths.Count, "A different keyboard must not trigger the configured button.");
             capture.PublishRawInput(0x61, isSelectedDevice: true);
-            Assert.IsTrue(executor.FirstExecution.Task.IsCompleted, "A non-ambiguous key must execute immediately.");
+            await WaitWithTimeoutAsync(executor.FirstExecution.Task);
             Assert.AreEqual("one", executor.ExecutedPaths.Single());
 
             capture.PublishRawInput(0x60, isSelectedDevice: true);
@@ -363,10 +455,10 @@ public sealed class DeckRuntimeServiceTests
             new ActionDispatcher(Array.Empty<IActionExecutor>()));
 
         await runtime.SetDeviceIdentificationKeysAsync(
-            [DeckKey.NumpadBack],
+            [DeckKey.NumpadSubtract],
             [DeckKey.Insert]);
 
-        CollectionAssert.AreEqual(new[] { DeckKey.NumpadBack }, capture.DeviceIdentificationKeysOff.ToArray());
+        CollectionAssert.AreEqual(new[] { DeckKey.NumpadSubtract }, capture.DeviceIdentificationKeysOff.ToArray());
         CollectionAssert.AreEqual(new[] { DeckKey.Insert }, capture.DeviceIdentificationKeysOn.ToArray());
         await runtime.DisposeAsync();
     }
@@ -477,6 +569,8 @@ public sealed class DeckRuntimeServiceTests
 
         public IReadOnlyCollection<DeckKey> AnyKeyboardKeys { get; private set; } = [];
 
+        public bool AdditionalButtonDeviceRoutingEnabled { get; private set; }
+
         public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
         public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
@@ -535,6 +629,14 @@ public sealed class DeckRuntimeServiceTests
             return Task.CompletedTask;
         }
 
+        public Task SetAdditionalButtonDeviceRoutingAsync(
+            bool isEnabled,
+            CancellationToken cancellationToken = default)
+        {
+            AdditionalButtonDeviceRoutingEnabled = isEnabled;
+            return Task.CompletedTask;
+        }
+
         public Task SetDeviceIdentificationKeysAsync(
             IReadOnlyCollection<DeckKey> numLockOffKeys,
             IReadOnlyCollection<DeckKey> numLockOnKeys,
@@ -568,8 +670,15 @@ public sealed class DeckRuntimeServiceTests
                 this,
                 new KeyboardInputObservedEventArgs(virtualKeyCode, scanCode, isExtended, isKeyDown));
 
-        public void PublishRawInput(uint virtualKeyCode, bool isSelectedDevice, bool isKeyDown = true)
+        public void PublishRawInput(
+            uint virtualKeyCode,
+            bool isSelectedDevice,
+            bool isKeyDown = true,
+            string? deviceId = null)
         {
+            deviceId ??= isSelectedDevice
+                ? SelectedKeyboardDeviceId ?? "test"
+                : "test";
             var capturedKeyPress = isSelectedDevice
                 && isKeyDown
                 && virtualKeyCode == 0x60
@@ -577,11 +686,12 @@ public sealed class DeckRuntimeServiceTests
                         DeckKey.Numpad0,
                         NumLockLayer.Off,
                         DateTimeOffset.UtcNow,
-                        virtualKeyCode)
+                        virtualKeyCode,
+                        deviceId)
                     : (CapturedKeyPress?)null;
             RawKeyboardInputObserved?.Invoke(this,
                 new RawKeyboardInputObservedEventArgs(
-                    "test",
+                deviceId,
                     virtualKeyCode,
                     0,
                     false,

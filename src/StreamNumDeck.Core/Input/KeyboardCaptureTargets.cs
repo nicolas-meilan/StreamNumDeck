@@ -39,8 +39,7 @@ public static class KeyboardCaptureTargetsExtensions
         DeckKey.Numpad3 or
         DeckKey.NumpadEnter or
         DeckKey.Numpad0 or
-        DeckKey.NumpadDecimal or
-        DeckKey.NumpadBack => targets.Includes(KeyboardCaptureTargets.Numpad),
+        DeckKey.NumpadDecimal => targets.Includes(KeyboardCaptureTargets.Numpad),
         _ => false,
     };
 }

@@ -130,7 +130,7 @@ public partial class KeyEditorWindow : Window
         this.actionOnlyMode = actionOnlyMode;
         this.allowAppearanceEditing = allowAppearanceEditing;
         InitializeComponent();
-        KeyboardSelectionSection.Visibility = actionOnlyMode || getAvailableKeyboards is null
+        KeyboardSelectionSection.Visibility = getAvailableKeyboards is null
             ? Visibility.Collapsed
             : Visibility.Visible;
         var isNumLockOn = System.Windows.Input.Keyboard.IsKeyToggled(System.Windows.Input.Key.NumLock);

@@ -44,8 +44,8 @@ public sealed class JsonConfigurationStoreTests
 
         Assert.IsTrue(File.Exists(paths.ConfigurationFilePath));
         Assert.AreEqual("Основной стрим", configuration.ActiveProfile.Name);
-        Assert.HasCount(23, configuration.ActiveProfile.NumLockOff.Assignments);
-        Assert.HasCount(23, configuration.ActiveProfile.NumLockOn.Assignments);
+        Assert.HasCount(22, configuration.ActiveProfile.NumLockOff.Assignments);
+        Assert.HasCount(22, configuration.ActiveProfile.NumLockOn.Assignments);
         Assert.IsTrue(configuration.Settings.ShowMuteOverlay);
     }
 
@@ -67,14 +67,21 @@ public sealed class JsonConfigurationStoreTests
     {
         using var store = new JsonConfigurationStore(paths);
         var configuration = AppConfiguration.CreateDefault();
-        var assignment = new KeyAssignment("Launch", IconReference.BuiltIn("star"), new StreamNumDeck.Core.Actions.OpenUriActionDefinition("https://example.com"));
-        var profile = configuration.ActiveProfile.WithAdditionalButton(new AdditionalButtonSettings(3, 0x41, assignment));
+        var assignment = new KeyAssignment("Launch", IconReference.BuiltIn("star"), new StreamNumDeck.Core.Actions.OpenUriActionDefinition("https://example.com"))
+        {
+            KeyboardDeviceId = "keyboard-device-id",
+            UseAnyKeyboard = true,
+        };
+        var profile = configuration.ActiveProfile.WithAdditionalButton(
+            new AdditionalButtonSettings(3, 0x41, assignment));
         await store.SaveAsync(configuration.ReplaceProfile(profile));
 
         var loaded = await store.LoadAsync();
         var button = loaded.ActiveProfile.AdditionalButtons[3];
         Assert.AreEqual((uint)0x41, button.VirtualKeyCode);
         Assert.AreEqual("Launch", button.Assignment.Label);
+        Assert.AreEqual("keyboard-device-id", button.Assignment.KeyboardDeviceId);
+        Assert.IsTrue(button.Assignment.UseAnyKeyboard);
         Assert.IsInstanceOfType<StreamNumDeck.Core.Actions.OpenUriActionDefinition>(button.Assignment.Action);
         Assert.HasCount(8, loaded.ActiveProfile.AdditionalButtons);
     }
@@ -98,7 +105,7 @@ public sealed class JsonConfigurationStoreTests
     }
 
     [TestMethod]
-    public async Task SaveAsync_AcceptsExistingAdditionalButtonsWithoutSequenceProperty()
+    public async Task LoadAsync_AcceptsAdditionalButtonsWithoutNewerProperties()
     {
         using var store = new JsonConfigurationStore(paths);
         await store.SaveAsync(AppConfiguration.CreateDefault());
@@ -108,6 +115,8 @@ public sealed class JsonConfigurationStoreTests
             foreach (var button in profile!["additionalButtons"]!.AsArray())
             {
                 button!.AsObject().Remove("virtualKeySequence");
+                button["assignment"]!.AsObject().Remove("keyboardDeviceId");
+                button["assignment"]!.AsObject().Remove("useAnyKeyboard");
             }
         }
 
@@ -115,8 +124,32 @@ public sealed class JsonConfigurationStoreTests
 
         var loaded = await store.LoadAsync();
 
+        Assert.IsNull(loaded.ActiveProfile.AdditionalButtons[0].Assignment.KeyboardDeviceId);
         await store.SaveAsync(loaded);
         Assert.IsTrue(File.Exists(paths.ConfigurationFilePath));
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_MigratesAdditionalButtonKeyboardDeviceFromLegacyLocation()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        await store.SaveAsync(AppConfiguration.CreateDefault());
+        var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        var additionalButton = root["configuration"]!["profiles"]![0]!["additionalButtons"]![0]!.AsObject();
+        additionalButton["keyboardDeviceId"] = "legacy-keyboard";
+        File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
+
+        var loaded = await store.LoadAsync();
+
+        Assert.AreEqual(
+            "legacy-keyboard",
+            loaded.ActiveProfile.AdditionalButtons[0].Assignment.KeyboardDeviceId);
+        var migratedRoot = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        var migratedButton = migratedRoot["configuration"]!["profiles"]![0]!["additionalButtons"]![0]!;
+        Assert.IsNull(migratedButton["keyboardDeviceId"]);
+        Assert.AreEqual(
+            "legacy-keyboard",
+            migratedButton["assignment"]!["keyboardDeviceId"]!.GetValue<string>());
     }
 
     [TestMethod]
@@ -441,7 +474,7 @@ public sealed class JsonConfigurationStoreTests
     }
 
     [TestMethod]
-    public async Task LoadAsync_OldProfilesWithoutNumpadBack_AddsEmptyAssignmentToBothLayers()
+    public async Task LoadAsync_RemovesObsoleteNumpadBackAssignmentsAndPersistsCleanConfiguration()
     {
         using var store = new JsonConfigurationStore(paths);
         var configuration = AppConfiguration.CreateDefault()
@@ -460,8 +493,23 @@ public sealed class JsonConfigurationStoreTests
         var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
         foreach (var profile in root["configuration"]!["profiles"]!.AsArray())
         {
-            profile!["numLockOff"]!["assignments"]!.AsObject().Remove("numpadBack");
-            profile["numLockOn"]!["assignments"]!.AsObject().Remove("numpadBack");
+            foreach (var layerName in new[] { "numLockOff", "numLockOn" })
+            {
+                var assignments = profile![layerName]!["assignments"]!.AsObject();
+                assignments["numpadBack"] = new JsonObject
+                {
+                    ["label"] = "Legacy Back",
+                    ["icon"] = new JsonObject
+                    {
+                        ["kind"] = "builtIn",
+                        ["value"] = "star",
+                    },
+                    ["action"] = new JsonObject
+                    {
+                        ["type"] = "none",
+                    },
+                };
+            }
         }
 
         File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
@@ -471,17 +519,20 @@ public sealed class JsonConfigurationStoreTests
         Assert.HasCount(2, loaded.Profiles);
         foreach (var profile in loaded.Profiles)
         {
-            Assert.AreEqual(
-                KeyAssignment.Empty,
-                profile.NumLockOff.GetAssignment(DeckKey.NumpadBack));
-            Assert.AreEqual(
-                KeyAssignment.Empty,
-                profile.NumLockOn.GetAssignment(DeckKey.NumpadBack));
+            Assert.HasCount(22, profile.NumLockOff.Assignments);
+            Assert.HasCount(22, profile.NumLockOn.Assignments);
         }
 
         Assert.AreEqual(
             preservedAssignment,
             loaded.Profiles[0].NumLockOn.GetAssignment(DeckKey.NumpadSubtract));
+
+        var cleanedRoot = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        foreach (var profile in cleanedRoot["configuration"]!["profiles"]!.AsArray())
+        {
+            Assert.IsFalse(profile!["numLockOff"]!["assignments"]!.AsObject().ContainsKey("numpadBack"));
+            Assert.IsFalse(profile["numLockOn"]!["assignments"]!.AsObject().ContainsKey("numpadBack"));
+        }
     }
 
     [TestMethod]

@@ -46,8 +46,8 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
                 if (File.Exists(paths.BackupFilePath))
                 {
                     var backupConfiguration = await ReadAsync(paths.BackupFilePath, cancellationToken).ConfigureAwait(false);
-                    await WriteAsync(backupConfiguration, createBackup: false, cancellationToken).ConfigureAwait(false);
-                    return backupConfiguration;
+                    await WriteAsync(backupConfiguration.Configuration, createBackup: false, cancellationToken).ConfigureAwait(false);
+                    return backupConfiguration.Configuration;
                 }
 
                 var defaultConfiguration = createDefaultConfiguration();
@@ -57,7 +57,13 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
 
             try
             {
-                return await ReadAsync(paths.ConfigurationFilePath, cancellationToken).ConfigureAwait(false);
+                var result = await ReadAsync(paths.ConfigurationFilePath, cancellationToken).ConfigureAwait(false);
+                if (result.RequiresPersistence)
+                {
+                    await WriteAsync(result.Configuration, createBackup: false, cancellationToken).ConfigureAwait(false);
+                }
+
+                return result.Configuration;
             }
             catch (Exception primaryFailure) when (IsRecoverableReadFailure(primaryFailure))
             {
@@ -71,8 +77,8 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
                 try
                 {
                     var recoveredConfiguration = await ReadAsync(paths.BackupFilePath, cancellationToken).ConfigureAwait(false);
-                    await WriteAsync(recoveredConfiguration, createBackup: false, cancellationToken).ConfigureAwait(false);
-                    return recoveredConfiguration;
+                    await WriteAsync(recoveredConfiguration.Configuration, createBackup: false, cancellationToken).ConfigureAwait(false);
+                    return recoveredConfiguration.Configuration;
                 }
                 catch (Exception backupFailure) when (IsRecoverableReadFailure(backupFailure))
                 {
@@ -118,7 +124,9 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
         disposed = true;
     }
 
-    private async Task<AppConfiguration> ReadAsync(string filePath, CancellationToken cancellationToken)
+    private async Task<ConfigurationReadResult> ReadAsync(
+        string filePath,
+        CancellationToken cancellationToken)
     {
         using var stream = new FileStream(
             filePath,
@@ -147,10 +155,11 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
 
         var root = JsonNode.Parse(document.RootElement.GetRawText())?.AsObject()
             ?? throw new InvalidDataException("The configuration document is empty.");
-        var hasMigratedAssignments = AddMissingNumpadBackAssignments(root);
-        hasMigratedAssignments |= MigrateDeviceIdentificationOptions(root);
+        var requiresPersistence = RemoveObsoleteNumpadBackAssignments(root);
+        requiresPersistence |= MigrateDeviceIdentificationOptions(root);
+        requiresPersistence |= MigrateAdditionalButtonKeyboardSettings(root);
         ConfigurationEnvelope? envelope;
-        if (hasMigratedAssignments)
+        if (requiresPersistence)
         {
             using var migratedDocument = JsonDocument.Parse(root.ToJsonString());
             envelope = migratedDocument.RootElement.Deserialize(jsonContext.ConfigurationEnvelope);
@@ -190,10 +199,54 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
             });
         }
 
-        return configuration;
+        return new ConfigurationReadResult(configuration, requiresPersistence);
     }
 
-    private static bool AddMissingNumpadBackAssignments(JsonObject root)
+    private sealed record ConfigurationReadResult(
+        AppConfiguration Configuration,
+        bool RequiresPersistence);
+
+    private static bool MigrateAdditionalButtonKeyboardSettings(JsonObject root)
+    {
+        if (root["configuration"] is not JsonObject configuration
+            || configuration["profiles"] is not JsonArray profiles)
+        {
+            return false;
+        }
+
+        var migrated = false;
+        foreach (var profile in profiles.OfType<JsonObject>())
+        {
+            if (profile["additionalButtons"] is not JsonArray buttons)
+            {
+                continue;
+            }
+
+            foreach (var button in buttons.OfType<JsonObject>())
+            {
+                if (!button.TryGetPropertyValue("keyboardDeviceId", out var legacyKeyboardDeviceId))
+                {
+                    continue;
+                }
+
+                button.Remove("keyboardDeviceId");
+                if (legacyKeyboardDeviceId is JsonValue value
+                    && value.TryGetValue<string>(out var keyboardDeviceId)
+                    && !string.IsNullOrWhiteSpace(keyboardDeviceId)
+                    && button["assignment"] is JsonObject assignment
+                    && assignment["keyboardDeviceId"] is null)
+                {
+                    assignment["keyboardDeviceId"] = keyboardDeviceId;
+                }
+
+                migrated = true;
+            }
+        }
+
+        return migrated;
+    }
+
+    private static bool RemoveObsoleteNumpadBackAssignments(JsonObject root)
     {
         if (root["configuration"] is not JsonObject configuration
             || configuration["profiles"] is not JsonArray profiles)
@@ -207,23 +260,17 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
             foreach (var layerName in new[] { "numLockOff", "numLockOn" })
             {
                 if (profile[layerName] is JsonObject layer
-                    && layer["assignments"] is JsonObject assignments
-                    && !assignments.ContainsKey("numpadBack"))
+                    && layer["assignments"] is JsonObject assignments)
                 {
-                    assignments.Add("numpadBack", new JsonObject
+                    var obsoleteKeys = assignments
+                        .Select(static assignment => assignment.Key)
+                        .Where(static key => string.Equals(key, "numpadBack", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+                    foreach (var obsoleteKey in obsoleteKeys)
                     {
-                        ["label"] = string.Empty,
-                        ["icon"] = new JsonObject
-                        {
-                            ["kind"] = "builtIn",
-                            ["value"] = "square",
-                        },
-                        ["action"] = new JsonObject
-                        {
-                            ["type"] = "none",
-                        },
-                    });
-                    migrated = true;
+                        assignments.Remove(obsoleteKey);
+                        migrated = true;
+                    }
                 }
             }
         }

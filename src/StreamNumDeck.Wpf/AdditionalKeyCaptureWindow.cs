@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Collections.Generic;
 using StreamNumDeck.Core.Deck;
+using StreamNumDeck.Wpf.Presentation;
 
 namespace StreamNumDeck.Wpf;
 
@@ -85,12 +86,12 @@ internal sealed class AdditionalKeyCaptureWindow : Window
         }
 
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
-        var code = KeyInterop.VirtualKeyFromKey(key);
-        if (code <= 0) return;
-        virtualKeySequence.Add((uint)code);
+        var code = AdditionalButtonKeyPresentation.GetVirtualKey(key);
+        if (code == 0) return;
+        virtualKeySequence.Add(code);
         capturedSequence.Text = string.Join(
             " + ",
-            virtualKeySequence.ConvertAll(value => KeyInterop.KeyFromVirtualKey((int)value).ToString()));
+            virtualKeySequence.ConvertAll(AdditionalButtonKeyPresentation.GetLabel));
         doneButton.IsEnabled = true;
         if (virtualKeySequence.Count == AdditionalButtonSettings.MaximumKeySequenceLength)
         {

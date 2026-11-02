@@ -59,6 +59,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private volatile KeyboardCaptureState state = KeyboardCaptureState.Stopped;
     private ImmutableHashSet<DeckKey> deviceSpecificKeys = ImmutableHashSet<DeckKey>.Empty;
     private ImmutableHashSet<DeckKey> anyKeyboardKeys = ImmutableHashSet<DeckKey>.Empty;
+    private int additionalButtonDeviceRoutingEnabled;
 
     public WindowsKeyboardCaptureService()
     {
@@ -167,6 +168,37 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             {
                 Volatile.Write(ref deviceSpecificKeys, previousSpecificKeys);
                 Volatile.Write(ref anyKeyboardKeys, previousAnyKeys);
+                await EnsureRawInputSourceAsync(CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+        }
+        finally
+        {
+            deviceGate.Release();
+        }
+    }
+
+    public async Task SetAdditionalButtonDeviceRoutingAsync(
+        bool isEnabled,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        await deviceGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var previousValue = Volatile.Read(ref additionalButtonDeviceRoutingEnabled);
+            Volatile.Write(ref additionalButtonDeviceRoutingEnabled, isEnabled ? 1 : 0);
+            try
+            {
+                if (state is not KeyboardCaptureState.Stopped)
+                {
+                    await EnsureRawInputSourceAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                Volatile.Write(ref additionalButtonDeviceRoutingEnabled, previousValue);
                 await EnsureRawInputSourceAsync(CancellationToken.None).ConfigureAwait(false);
                 throw;
             }
@@ -410,7 +442,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
 
             var isExtended = (input.Flags & LlkhfExtended) != 0;
             var hasTranslatedKey = KeyboardScanCodeTranslator.TryTranslate(
-                input.VkCode,
                 input.ScanCode,
                 isExtended,
                 out var translatedKey);
@@ -540,7 +571,8 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     {
         var shouldObserveRawInput = SelectedKeyboardDeviceId is not null
             || !Volatile.Read(ref deviceSpecificKeys).IsEmpty
-            || !Volatile.Read(ref anyKeyboardKeys).IsEmpty;
+            || !Volatile.Read(ref anyKeyboardKeys).IsEmpty
+            || Volatile.Read(ref additionalButtonDeviceRoutingEnabled) != 0;
         if (shouldObserveRawInput)
         {
             if (rawInputSource is null)
@@ -580,7 +612,6 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             SelectedKeyboardDeviceId,
             StringComparison.OrdinalIgnoreCase);
         var hasTranslatedKey = KeyboardScanCodeTranslator.TryTranslate(
-            virtualKeyCode,
             scanCode,
             isExtended,
             out var translatedKey);

@@ -11,6 +11,23 @@ namespace StreamNumDeck.Wpf.Tests;
 public sealed class DeckKeyTileViewModelTests
 {
     [TestMethod]
+    public void AdditionalButtonKeyPresentation_RecognizesBackspaceForCaptureAndDisplay()
+    {
+        Assert.AreEqual(0x08u, AdditionalButtonKeyPresentation.GetVirtualKey(System.Windows.Input.Key.Back));
+        Assert.AreEqual("Backspace", AdditionalButtonKeyPresentation.GetLabel(0x08));
+    }
+
+    [TestMethod]
+    public void AdditionalButtonTile_ShowsBackspaceAsAssignedKey()
+    {
+        var tile = new AdditionalButtonTileViewModel(0);
+
+        tile.Update([0x08], KeyAssignment.Empty, new StubIconAssetStore());
+
+        Assert.AreEqual("Backspace", tile.KeyLabel);
+    }
+
+    [TestMethod]
     public void Update_NoAction_ShowsPhysicalLabelAndAddIcon()
     {
         var tile = new DeckKeyTileViewModel(DeckKey.Numpad7);

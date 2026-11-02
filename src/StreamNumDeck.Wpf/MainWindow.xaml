@@ -273,22 +273,21 @@
                         </Border>
                         <Button Grid.Row="0" Grid.Column="1" Margin="4,0,4,4" Tag="NumpadDivide" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadDivide]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="0" Grid.Column="2" Margin="4,0,4,4" Tag="NumpadMultiply" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadMultiply]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
-                        <Button Grid.Row="0" Grid.Column="3" Margin="4,0,0,4" Tag="NumpadBack" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadBack]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
+                        <Button Grid.Row="0" Grid.Column="3" Margin="4,0,0,4" Tag="NumpadSubtract" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadSubtract]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
 
                         <Button Grid.Row="1" Grid.Column="0" Margin="0,4,4,4" Tag="Numpad7" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad7]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="1" Grid.Column="1" Margin="4" Tag="Numpad8" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad8]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="1" Grid.Column="2" Margin="4" Tag="Numpad9" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad9]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
-                        <Button Grid.Row="1" Grid.Column="3" Margin="4" Tag="NumpadSubtract" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadSubtract]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
 
                         <Button Grid.Row="2" Grid.Column="0" Margin="0,4,4,4" Tag="Numpad4" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad4]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="2" Grid.Column="1" Margin="4" Tag="Numpad5" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad5]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="2" Grid.Column="2" Margin="4" Tag="Numpad6" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad6]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
-                        <Button Grid.Row="2" Grid.Column="3" Margin="4" Tag="NumpadAdd" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadAdd]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
+                        <Button Grid.Row="1" Grid.Column="3" Margin="4" Tag="NumpadAdd" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadAdd]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
 
                         <Button Grid.Row="3" Grid.Column="0" Margin="0,4,4,4" Tag="Numpad1" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad1]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="3" Grid.Column="1" Margin="4" Tag="Numpad2" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad2]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="3" Grid.Column="2" Margin="4" Tag="Numpad3" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad3]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
-                        <Button Grid.Row="3" Grid.RowSpan="2" Grid.Column="3" Margin="4,4,0,0" Tag="NumpadEnter" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadEnter]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
+                        <Button Grid.Row="2" Grid.RowSpan="3" Grid.Column="3" Margin="4" Tag="NumpadEnter" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadEnter]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
 
                         <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,4,0" Tag="Numpad0" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[Numpad0]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="4" Grid.Column="2" Margin="4,4,4,0" Tag="NumpadDecimal" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadDecimal]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
@@ -304,7 +303,7 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="3,1">
-                                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="17"/></Grid.RowDefinitions>
+                                            <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="20"/></Grid.RowDefinitions>
                                             <Button Grid.Row="0" Tag="{Binding Slot}" Click="AdditionalButton_Click"
                                                     Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding}"
                                                     ContentTemplate="{StaticResource AdditionalButtonTemplate}"

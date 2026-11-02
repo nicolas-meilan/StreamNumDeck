@@ -60,7 +60,8 @@ identifier is stored.
 - Physical keys are identified by scan code and extended-key information, not
   by the character produced by the current keyboard layout.
 - NumLock is the layer selector and is not an ordinary action key.
-- Both layers contain assignments for the 23 assignable keys, for 46 action slots. Configurations from earlier versions are migrated with an empty Back assignment in each profile layer.
+- Both layers contain assignments for the 22 assignable keys, for 44 action slots. Configurations with the retired Numpad Back assignment have it removed when loaded.
+- Additional-button key sequences can use the global keyboard setting or be bound to a specific keyboard.
 - Injected input is tagged and never recursively processed as physical input.
 - Captured keys are blocked globally by default. An opt-in per-assignment device-identification flag waits up to 10 ms for Raw Input correlation; only keys from the selected device are blocked and unmatched events pass through. Closely timed identical keys from different devices can still be misidentified.
 - The hook callback performs no file, network, audio or UI work beyond the bounded device-correlation wait for explicitly configured keys.
