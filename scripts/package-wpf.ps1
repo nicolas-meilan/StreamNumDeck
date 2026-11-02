@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$')]
-    [string] $Version = '2.0.0',
+    [string] $Version = '2.0.1',
 
     [switch] $SkipInstaller
 )

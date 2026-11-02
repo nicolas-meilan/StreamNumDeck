@@ -192,6 +192,9 @@
   <data name="Settings_RawInputDiagnosticOther" xml:space="preserve">
     <value>otro</value>
   </data>
+  <data name="Settings_RawInputDiagnosticSimpleEntry" xml:space="preserve">
+    <value>VK 0x{0:X2} - Scan 0x{1:X2} - Extendido: {2} - Tecla: {3} - Teclado: {4}</value>
+  </data>
   <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
     <value>sí</value>
   </data>

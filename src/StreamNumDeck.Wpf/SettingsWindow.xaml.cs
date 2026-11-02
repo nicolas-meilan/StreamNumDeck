@@ -8,6 +8,7 @@ using StreamNumDeck.Core.Settings;
 using StreamNumDeck.Wpf.Services;
 using StreamNumDeck.Wpf.ViewModels;
 using StreamNumDeck.Wpf.Localization;
+using StreamNumDeck.Wpf.Presentation;
 
 namespace StreamNumDeck.Wpf;
 
@@ -280,19 +281,28 @@ public partial class SettingsWindow : Window
             var extended = AppStrings.Get(
                 e.IsExtended ? "Settings_ScanCodeExtended.Yes" : "Settings_ScanCodeExtended.No",
                 e.IsExtended ? "yes" : "no");
-            var device = AppStrings.Get(
-                e.IsSelectedDevice
-                    ? "Settings_RawInputDiagnosticSelected"
-                    : "Settings_RawInputDiagnosticOther",
-                e.IsSelectedDevice ? "selected" : "other");
             var entry = AppStrings.Format(
-                "Settings_RawInputDiagnosticEntry",
-                device,
+                "Settings_RawInputDiagnosticSimpleEntry",
                 e.VirtualKeyCode,
                 e.ScanCode,
-                extended);
+                extended,
+                AdditionalButtonKeyPresentation.GetLabel(e.VirtualKeyCode),
+                GetShortKeyboardDeviceId(e.DeviceId));
             AppendKeyboardDiagnosticEntry(entry);
         }));
+    }
+
+    private static string GetShortKeyboardDeviceId(string deviceId)
+    {
+        var interfaceSeparator = deviceId.LastIndexOf("#{", StringComparison.Ordinal);
+        var deviceInstancePath = interfaceSeparator >= 0
+            ? deviceId.Substring(0, interfaceSeparator)
+            : deviceId;
+        var instanceSeparator = deviceInstancePath.LastIndexOf('#');
+        var instanceId = instanceSeparator >= 0
+            ? deviceInstancePath.Substring(instanceSeparator + 1)
+            : deviceInstancePath;
+        return instanceId.Length > 8 ? $"{instanceId.Substring(0, 8)}..." : instanceId;
     }
 
     private void AppendKeyboardDiagnosticEntry(string entry)
