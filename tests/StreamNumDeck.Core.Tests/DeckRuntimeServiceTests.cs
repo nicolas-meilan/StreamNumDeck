@@ -5,12 +5,50 @@ using StreamNumDeck.Core.Deck;
 using StreamNumDeck.Core.Execution;
 using StreamNumDeck.Core.Icons;
 using StreamNumDeck.Core.Input;
+using StreamNumDeck.Core.Settings;
 
 namespace StreamNumDeck.Core.Tests;
 
 [TestClass]
 public sealed class DeckRuntimeServiceTests
 {
+    [TestMethod]
+    public async Task NumLockActionMode_UsesOnLayerAndRoutesNumLockAsAssignable()
+    {
+        var settings = StreamNumDeck.Core.Settings.GlobalSettings.Default with
+        {
+            NumLockBehavior = NumLockBehavior.ActionKey,
+        };
+        var configuration = AppConfiguration.CreateDefault().WithSettings(settings);
+        var profile = configuration.ActiveProfile.WithAssignment(
+            NumLockLayer.On,
+            DeckKey.NumLock,
+            new KeyAssignment("NumLock action", IconReference.BuiltIn("play"), new OpenPathActionDefinition("numlock")));
+        using var configurationService = new ConfigurationService(
+            new InMemoryConfigurationStore(configuration.ReplaceProfile(profile)));
+        var capture = new TestKeyboardCaptureService();
+        var executor = new BlockingExecutor();
+        var runtime = new DeckRuntimeService(
+            configurationService,
+            capture,
+            new ActionDispatcher(new[] { executor }));
+
+        try
+        {
+            await runtime.StartAsync();
+
+            Assert.AreEqual(NumLockBehavior.ActionKey, capture.NumLockBehavior);
+            Assert.IsTrue(KeyboardCaptureTargets.Numpad.Includes(DeckKey.NumLock));
+            capture.Publish(DeckKey.NumLock, NumLockLayer.On);
+            await WaitWithTimeoutAsync(executor.FirstStarted.Task);
+        }
+        finally
+        {
+            executor.ReleaseFirst.TrySetResult(true);
+            await runtime.DisposeAsync();
+        }
+    }
+
     [TestMethod]
     public async Task DifferentKeys_CanExecuteWhileAutomationIsWaiting()
     {
@@ -571,6 +609,8 @@ public sealed class DeckRuntimeServiceTests
 
         public bool AdditionalButtonDeviceRoutingEnabled { get; private set; }
 
+        public NumLockBehavior NumLockBehavior { get; private set; } = NumLockBehavior.SwitchLayers;
+
         public event EventHandler<KeyboardCaptureStateChangedEventArgs>? StateChanged;
 
         public event EventHandler<NumLockStateChangedEventArgs>? NumLockStateChanged;
@@ -604,6 +644,14 @@ public sealed class DeckRuntimeServiceTests
             CancellationToken cancellationToken = default)
         {
             CaptureTargets = targets;
+            return Task.CompletedTask;
+        }
+
+        public Task SetNumLockBehaviorAsync(
+            NumLockBehavior behavior,
+            CancellationToken cancellationToken = default)
+        {
+            NumLockBehavior = behavior;
             return Task.CompletedTask;
         }
 
@@ -658,8 +706,8 @@ public sealed class DeckRuntimeServiceTests
 
         public ValueTask DisposeAsync() => default;
 
-        public void Publish(DeckKey key) => channel.Writer.TryWrite(
-            new CapturedKeyPress(key, NumLockLayer.Off, DateTimeOffset.UtcNow));
+        public void Publish(DeckKey key, NumLockLayer layer = NumLockLayer.Off) => channel.Writer.TryWrite(
+            new CapturedKeyPress(key, layer, DateTimeOffset.UtcNow));
 
         public void PublishObservedInput(
             uint virtualKeyCode,

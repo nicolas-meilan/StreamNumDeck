@@ -160,7 +160,7 @@
     <value>Включить/выключить перехват клавиш</value>
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
-    <value>Физическая клавиша NumLock переключает два слоя назначений.</value>
+    <value>Выберите, будет ли NumLock переключать слои или запускать собственное действие. В режиме действия для всех клавиш используется слой NumLock включён.</value>
   </data>
   <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
     <value>Определить клавишу клавиатуры</value>
@@ -1104,5 +1104,14 @@
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Фонарик</value>
+  </data>
+<data name="Settings_NumLockBehavior.Header" xml:space="preserve">
+    <value>Поведение NumLock</value>
+  </data>
+<data name="Settings_NumLockBehavior.SwitchLayers" xml:space="preserve">
+    <value>Переключать слои назначений</value>
+  </data>
+<data name="Settings_NumLockBehavior.ActionKey" xml:space="preserve">
+    <value>Назначить действие (всегда использовать слой NumLock включён)</value>
   </data>
 </root>

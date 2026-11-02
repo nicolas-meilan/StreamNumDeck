@@ -28,13 +28,16 @@ public sealed class DeckModelTests
     public void DefaultSettings_SelectGlobalKeyboardCapture()
     {
         Assert.AreEqual(string.Empty, StreamNumDeck.Core.Settings.GlobalSettings.Default.SelectedKeyboardDeviceId);
+        Assert.AreEqual(
+            StreamNumDeck.Core.Settings.NumLockBehavior.SwitchLayers,
+            StreamNumDeck.Core.Settings.GlobalSettings.Default.NumLockBehavior);
     }
 
     [TestMethod]
-    public void AssignableKeyCatalog_ContainsTwentyTwoUniquePhysicalKeys()
+    public void AssignableKeyCatalog_ContainsTwentyThreeUniquePhysicalKeys()
     {
-        Assert.HasCount(22, DeckKeyCatalog.AssignableKeys);
-        Assert.HasCount(22, DeckKeyCatalog.AssignableKeys.Distinct());
+        Assert.HasCount(23, DeckKeyCatalog.AssignableKeys);
+        Assert.HasCount(23, DeckKeyCatalog.AssignableKeys.Distinct());
     }
 
     [TestMethod]
@@ -44,8 +47,8 @@ public sealed class DeckModelTests
 
         Assert.AreEqual(NumLockLayer.Off, profile.NumLockOff.Mode);
         Assert.AreEqual(NumLockLayer.On, profile.NumLockOn.Mode);
-        Assert.HasCount(22, profile.NumLockOff.Assignments);
-        Assert.HasCount(22, profile.NumLockOn.Assignments);
+        Assert.HasCount(23, profile.NumLockOff.Assignments);
+        Assert.HasCount(23, profile.NumLockOn.Assignments);
         Assert.AreEqual(IconReference.BuiltIn("broadcast"), profile.Icon);
         Assert.HasCount(AdditionalButtonSettings.Count, profile.AdditionalButtons);
         Assert.IsTrue(profile.AdditionalButtons.All(button => button.VirtualKeyCode is null));

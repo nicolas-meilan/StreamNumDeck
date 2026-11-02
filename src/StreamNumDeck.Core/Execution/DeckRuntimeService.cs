@@ -3,6 +3,7 @@ using StreamNumDeck.Core.Actions;
 using StreamNumDeck.Core.Configuration;
 using StreamNumDeck.Core.Deck;
 using StreamNumDeck.Core.Input;
+using StreamNumDeck.Core.Settings;
 
 namespace StreamNumDeck.Core.Execution;
 
@@ -96,6 +97,11 @@ public sealed class DeckRuntimeService : IAsyncDisposable
         KeyboardCaptureTargets targets,
         CancellationToken cancellationToken = default) =>
         keyboardCapture.SetCaptureTargetsAsync(targets, cancellationToken);
+
+    public Task SetNumLockBehaviorAsync(
+        NumLockBehavior behavior,
+        CancellationToken cancellationToken = default) =>
+        keyboardCapture.SetNumLockBehaviorAsync(behavior, cancellationToken);
 
     public Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(
         CancellationToken cancellationToken = default) =>
@@ -423,7 +429,12 @@ public sealed class DeckRuntimeService : IAsyncDisposable
         AppConfiguration configuration,
         CancellationToken cancellationToken = default)
     {
-        var layer = keyboardCapture.IsNumLockOn ? NumLockLayer.On : NumLockLayer.Off;
+        await keyboardCapture.SetNumLockBehaviorAsync(
+            configuration.Settings.NumLockBehavior,
+            cancellationToken).ConfigureAwait(false);
+        var layer = configuration.Settings.NumLockBehavior is NumLockBehavior.ActionKey || keyboardCapture.IsNumLockOn
+            ? NumLockLayer.On
+            : NumLockLayer.Off;
         var mappings = configuration.ActiveProfile
             .GetLayer(layer)
             .Assignments

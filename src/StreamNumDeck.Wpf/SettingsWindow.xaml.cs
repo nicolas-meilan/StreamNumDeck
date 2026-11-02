@@ -65,6 +65,7 @@ public partial class SettingsWindow : Window
             ShowMuteOverlayCheckBox.IsChecked = snapshot.Settings.ShowMuteOverlay;
             CaptureNumpadCheckBox.IsChecked = snapshot.Settings.CaptureNumpad;
             CaptureNavigationBlockCheckBox.IsChecked = snapshot.Settings.CaptureNavigationBlock;
+            NumLockBehaviorComboBox.SelectedIndex = snapshot.Settings.NumLockBehavior is NumLockBehavior.ActionKey ? 1 : 0;
             await RefreshKeyboardDeviceListAsync(snapshot.Settings.SelectedKeyboardDeviceId);
             ObsHostTextBox.Text = snapshot.Settings.Obs.Host;
             ObsPortTextBox.Text = snapshot.Settings.Obs.Port.ToString();
@@ -144,6 +145,9 @@ public partial class SettingsWindow : Window
             {
                 CaptureNumpad = CaptureNumpadCheckBox.IsChecked == true,
                 CaptureNavigationBlock = CaptureNavigationBlockCheckBox.IsChecked == true,
+                NumLockBehavior = NumLockBehaviorComboBox.SelectedIndex == 1
+                    ? NumLockBehavior.ActionKey
+                    : NumLockBehavior.SwitchLayers,
                 SelectedKeyboardDeviceId = selectedKeyboardDeviceId ?? string.Empty,
                 ShowMuteOverlay = ShowMuteOverlayCheckBox.IsChecked == true,
                 VTubeStudio = new VTubeStudioConnectionSettings(

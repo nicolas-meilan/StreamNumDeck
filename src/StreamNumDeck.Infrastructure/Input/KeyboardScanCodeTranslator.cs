@@ -4,12 +4,29 @@ namespace StreamNumDeck.Infrastructure.Input;
 
 public static class KeyboardScanCodeTranslator
 {
+    public const uint NumLockVirtualKeyCode = 0x90;
     public const uint NumLockScanCode = 0x45;
+
+    public static bool TryTranslate(
+        uint virtualKeyCode,
+        uint scanCode,
+        bool isExtended,
+        out DeckKey key)
+    {
+        if (virtualKeyCode == NumLockVirtualKeyCode || scanCode == NumLockScanCode)
+        {
+            key = DeckKey.NumLock;
+            return true;
+        }
+
+        return TryTranslate(scanCode, isExtended, out key);
+    }
 
     public static bool TryTranslate(uint scanCode, bool isExtended, out DeckKey key)
     {
         var mappedKey = (scanCode, isExtended) switch
         {
+            (NumLockScanCode, _) => (DeckKey?)DeckKey.NumLock,
             (0x52, true) => (DeckKey?)DeckKey.Insert,
             (0x47, true) => DeckKey.Home,
             (0x49, true) => DeckKey.PageUp,

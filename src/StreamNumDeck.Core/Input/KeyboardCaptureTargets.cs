@@ -24,6 +24,7 @@ public static class KeyboardCaptureTargetsExtensions
         DeckKey.Delete or
         DeckKey.End or
         DeckKey.PageDown => targets.Includes(KeyboardCaptureTargets.NavigationBlock),
+        DeckKey.NumLock or
         DeckKey.NumpadDivide or
         DeckKey.NumpadMultiply or
         DeckKey.NumpadSubtract or

@@ -1,4 +1,5 @@
 using StreamNumDeck.Core.Deck;
+using StreamNumDeck.Core.Settings;
 
 namespace StreamNumDeck.Core.Input;
 
@@ -28,6 +29,10 @@ public interface IKeyboardCaptureService : IAsyncDisposable
 
     Task SetCaptureTargetsAsync(
         KeyboardCaptureTargets targets,
+        CancellationToken cancellationToken = default);
+
+    Task SetNumLockBehaviorAsync(
+        NumLockBehavior behavior,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<KeyboardDeviceInfo>> GetAvailableKeyboardsAsync(

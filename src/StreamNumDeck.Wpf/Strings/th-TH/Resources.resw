@@ -121,7 +121,7 @@
     <value>เปิด/ปิดการบันทึกคีย์</value>
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
-    <value>ปุ่ม NumLock ทางกายภาพจะสลับระหว่างเลเยอร์การกำหนดสองชั้น</value>
+    <value>Choose whether NumLock switches assignment layers or triggers its own action. In action mode, all keys use the NumLock On layer.</value>
   </data>
   <data name="Settings_ObsSection.Text" xml:space="preserve">
     <value>โอบีเอส สตูดิโอ</value>
@@ -1104,5 +1104,14 @@
   </data>
   <data name="Settings_ScanCodeExtended.Yes" xml:space="preserve">
     <value>ใช่</value>
+  </data>
+<data name="Settings_NumLockBehavior.Header" xml:space="preserve">
+    <value>NumLock behavior</value>
+  </data>
+<data name="Settings_NumLockBehavior.SwitchLayers" xml:space="preserve">
+    <value>Switch assignment layers</value>
+  </data>
+<data name="Settings_NumLockBehavior.ActionKey" xml:space="preserve">
+    <value>Assign an action (always use NumLock On layer)</value>
   </data>
 </root>

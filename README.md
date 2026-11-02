@@ -57,7 +57,7 @@ StreamNumDeck turns the numeric keypad and the six navigation keys above it into
 
 There is no extra device to buy and no need to leave the game or hunt through open windows.
 
-The physical `NumLock` key switches between two independent layers. That gives you up to **46 actions in every profile**. The key background in StreamNumDeck always shows which layer is active.
+By default, the physical `NumLock` key switches between two independent layers. In **Settings → Keyboard**, you can instead make it an assignable action key; in that mode, all keys use the NumLock On layer. The key background in StreamNumDeck shows the active assignment layer.
 
 ### What can I do with it?
 
@@ -97,7 +97,7 @@ The portable build stores profiles and settings in `%LocalAppData%\StreamNumDeck
 2. Choose an icon, label, action group, and action.
 3. Configure the action and save it.
 4. Press the same physical key while StreamNumDeck is running.
-5. Press `NumLock` to configure and use the second layer.
+5. By default, press `NumLock` to configure and use the second layer. **Settings → Keyboard** can instead make NumLock an action key.
 
 The numpad (including Backspace) and the six-key navigation block can be captured independently from the main window. The microphone indicator can be disabled in **Settings → System**. Capture can also be paused from the tray menu. `Ctrl+Alt+F12` remains available as an emergency capture toggle.
 
@@ -170,7 +170,7 @@ StreamNumDeck превращает цифровой блок, клавишу Bac
 
 Не нужно покупать отдельное устройство, сворачивать игру или искать нужное окно среди открытых программ.
 
-Физическая клавиша `NumLock` переключает два независимых слоя. В каждом профиле можно назначить до **46 действий**. Фон клавиши в StreamNumDeck всегда показывает, какой слой сейчас активен.
+По умолчанию физическая клавиша `NumLock` переключает два независимых слоя. В разделе **Настройки → Клавиатура** можно назначить ей действие; в этом режиме для всех клавиш используется слой NumLock включён. Фон клавиши в StreamNumDeck показывает активный слой назначений.
 
 ### Что можно делать?
 
@@ -210,7 +210,7 @@ Portable-версия хранит профили и настройки в `%Loc
 2. Выберите иконку, подпись, группу и нужное действие.
 3. Настройте действие и сохраните его.
 4. Нажмите соответствующую физическую клавишу, пока StreamNumDeck работает.
-5. Нажмите `NumLock`, чтобы настроить и использовать второй слой.
+5. По умолчанию нажимайте `NumLock`, чтобы настроить и использовать второй слой. В разделе **Настройки → Клавиатура** можно назначить NumLock действие.
 
 Перехват цифрового блока (включая Backspace) и шести навигационных клавиш включается независимо в главном окне. Индикатор микрофона можно отключить в разделе **Настройки → Система**. В меню трея перехват можно временно приостановить. Сочетание `Ctrl+Alt+F12` остаётся аварийным переключателем перехвата.
 

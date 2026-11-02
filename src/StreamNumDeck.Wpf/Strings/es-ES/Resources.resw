@@ -169,7 +169,7 @@
     <value>Activar o desactivar la captura de claves</value>
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
-    <value>La tecla física NumLock cambia entre dos capas de asignación.</value>
+    <value>Elige si Bloq Num cambia entre las capas de asignaciones o ejecuta su propia acción. En modo acción, todas las teclas usan la capa NumLock activado.</value>
   </data>
   <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
     <value>Identificar una tecla</value>
@@ -1107,5 +1107,14 @@ Haga clic derecho para realizar acciones de perfil</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>linterna</value>
+  </data>
+<data name="Settings_NumLockBehavior.Header" xml:space="preserve">
+    <value>Comportamiento de Bloq Num</value>
+  </data>
+<data name="Settings_NumLockBehavior.SwitchLayers" xml:space="preserve">
+    <value>Cambiar capas de asignaciones</value>
+  </data>
+<data name="Settings_NumLockBehavior.ActionKey" xml:space="preserve">
+    <value>Asignar una acción (usar siempre la capa NumLock activado)</value>
   </data>
 </root>

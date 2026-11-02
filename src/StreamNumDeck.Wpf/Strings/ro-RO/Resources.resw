@@ -160,7 +160,7 @@
     <value>Activați/dezactivați capturarea tastelor</value>
   </data>
   <data name="Settings_NumLockHint.Text" xml:space="preserve">
-    <value>Tasta fizică NumLock comută între două straturi de atribuire.</value>
+    <value>Choose whether NumLock switches assignment layers or triggers its own action. In action mode, all keys use the NumLock On layer.</value>
   </data>
   <data name="Settings_ScanCodeDiagnostic.Header" xml:space="preserve">
     <value>Identificați o tastă de la tastatură</value>
@@ -1104,5 +1104,14 @@ Clic dreapta pentru acțiunile profilului</value>
   </data>
   <data name="Icon_flashlight" xml:space="preserve">
     <value>Lanterna</value>
+  </data>
+<data name="Settings_NumLockBehavior.Header" xml:space="preserve">
+    <value>NumLock behavior</value>
+  </data>
+<data name="Settings_NumLockBehavior.SwitchLayers" xml:space="preserve">
+    <value>Switch assignment layers</value>
+  </data>
+<data name="Settings_NumLockBehavior.ActionKey" xml:space="preserve">
+    <value>Assign an action (always use NumLock On layer)</value>
   </data>
 </root>

@@ -6,6 +6,7 @@ internal static class DeckPresentation
 {
     public static string GetPhysicalLabel(DeckKey key) => key switch
     {
+        DeckKey.NumLock => "NumLock",
         DeckKey.Insert => "Ins",
         DeckKey.Home => "Home",
         DeckKey.PageUp => "PgUp",

@@ -11,6 +11,7 @@ public sealed class KeyboardScanCodeTranslatorTests
     {
         (uint ScanCode, bool Extended, DeckKey Key)[] cases =
         [
+            (KeyboardScanCodeTranslator.NumLockScanCode, false, DeckKey.NumLock),
             (0x52, true, DeckKey.Insert),
             (0x47, true, DeckKey.Home),
             (0x49, true, DeckKey.PageUp),
@@ -62,6 +63,24 @@ public sealed class KeyboardScanCodeTranslatorTests
     }
 
     [TestMethod]
+    public void TranslatesNumLockRegardlessOfExtendedFlagOrScanCode()
+    {
+        Assert.IsTrue(KeyboardScanCodeTranslator.TryTranslate(
+            KeyboardScanCodeTranslator.NumLockVirtualKeyCode,
+            0,
+            true,
+            out var keyFromVirtualKey));
+        Assert.IsTrue(KeyboardScanCodeTranslator.TryTranslate(
+            0,
+            KeyboardScanCodeTranslator.NumLockScanCode,
+            true,
+            out var keyFromScanCode));
+
+        Assert.AreEqual(DeckKey.NumLock, keyFromVirtualKey);
+        Assert.AreEqual(DeckKey.NumLock, keyFromScanCode);
+    }
+
+    [TestMethod]
     public void DoesNotTranslateBackspaceAsAnAssignableDeckKey()
     {
         Assert.IsFalse(KeyboardScanCodeTranslator.TryTranslate(0x0E, false, out _));
@@ -69,12 +88,8 @@ public sealed class KeyboardScanCodeTranslatorTests
     }
 
     [TestMethod]
-    public void RejectsNumLockAndUnknownScanCodes()
+    public void RejectsUnknownScanCodes()
     {
-        Assert.IsFalse(KeyboardScanCodeTranslator.TryTranslate(
-            KeyboardScanCodeTranslator.NumLockScanCode,
-            false,
-            out _));
         Assert.IsFalse(KeyboardScanCodeTranslator.TryTranslate(0xFFFF, false, out _));
     }
 }

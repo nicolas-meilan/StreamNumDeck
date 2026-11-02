@@ -247,7 +247,7 @@
                             </Grid.RowDefinitions>
                             <Grid Margin="2,0">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                            ToolTip="{localization:Loc Settings_NumLockHint.Text, Fallback=Physical NumLock switches two assignment layers.}">
+                                            ToolTip="{localization:Loc Settings_NumLockHint.Text, Fallback=Choose whether NumLock switches layers or triggers an action.}">
                                     <Ellipse Width="8" Height="8" Fill="{Binding NumLockBackground}" />
                                     <TextBlock Text="NumLock" Margin="6,0,0,0" FontSize="11" VerticalAlignment="Center" />
                                 </StackPanel>
@@ -265,12 +265,17 @@
                             <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Grid.Column="0" Margin="0,0,4,4" Background="{Binding NumLockBackground}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" ToolTip="{localization:Loc Settings_NumLockHint.Text, Fallback=Physical NumLock switches two assignment layers.}">
+                        <Border Grid.Row="0" Grid.Column="0" Margin="0,0,4,4" Background="{Binding NumLockBackground}" BorderBrush="{StaticResource CardBorderBrush}" BorderThickness="1" CornerRadius="10" ToolTip="{localization:Loc Settings_NumLockHint.Text, Fallback=Choose whether NumLock switches layers or triggers an action.}" Visibility="{Binding NumLockSelectorVisibility}">
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE8AB;" FontSize="20" HorizontalAlignment="Center" />
                                 <TextBlock Text="NumLock" Margin="0,4,0,0" FontSize="12" />
                             </StackPanel>
                         </Border>
+                        <Button Grid.Row="0" Grid.Column="0" Margin="0,0,4,4" Tag="NumLock" Click="DeckKey_Click"
+                                Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumLock]}"
+                                ContentTemplate="{StaticResource DeckKeyTemplate}"
+                                ToolTip="{localization:Loc Settings_NumLockBehavior.ActionKey, Fallback=Assign an action to NumLock}"
+                                Visibility="{Binding NumLockActionButtonVisibility}" />
                         <Button Grid.Row="0" Grid.Column="1" Margin="4,0,4,4" Tag="NumpadDivide" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadDivide]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="0" Grid.Column="2" Margin="4,0,4,4" Tag="NumpadMultiply" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadMultiply]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />
                         <Button Grid.Row="0" Grid.Column="3" Margin="4,0,0,4" Tag="NumpadSubtract" Click="DeckKey_Click" Style="{StaticResource DeckKeyButtonStyle}" Content="{Binding Tiles[NumpadSubtract]}" ContentTemplate="{StaticResource DeckKeyTemplate}" />

@@ -48,6 +48,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private bool keyboardDiagnosticActive;
     private DeckProfile? selectedProfile;
     private bool isNumLockOn;
+    private NumLockBehavior numLockBehavior = NumLockBehavior.SwitchLayers;
     private bool captureNumpad = true;
     private bool captureNavigationBlock = true;
     private string obsStatusText = AppStrings.Get("Obs_Disconnected", "OBS disconnected");
@@ -106,19 +107,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         }
     }
 
-    public bool IsNumLockOn
-    {
-        get => isNumLockOn;
-        private set
-        {
-            if (SetProperty(ref isNumLockOn, value))
-            {
-                OnPropertyChanged(nameof(NumLockBackground));
-                RefreshTiles();
-            }
-        }
-    }
+    public bool IsNumLockOn => numLockBehavior is NumLockBehavior.ActionKey || isNumLockOn;
 
+    public bool IsNumLockActionKey => numLockBehavior is NumLockBehavior.ActionKey;
+    public Visibility NumLockSelectorVisibility => IsNumLockActionKey ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility NumLockActionButtonVisibility => IsNumLockActionKey ? Visibility.Visible : Visibility.Collapsed;
     public Brush NumLockBackground => IsNumLockOn ? NumLockOnBrush : NumLockOffBrush;
     public bool CaptureNumpad { get => captureNumpad; private set => SetProperty(ref captureNumpad, value); }
     public bool CaptureNavigationBlock { get => captureNavigationBlock; private set => SetProperty(ref captureNavigationBlock, value); }
@@ -157,7 +150,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         runtimeService.CaptureError += RuntimeService_CaptureError;
         obsController.StateChanged += ObsController_StateChanged;
 
-        IsNumLockOn = runtimeService.IsNumLockOn;
+        UpdateNumLockState(runtimeService.IsNumLockOn);
         await ApplyCaptureTargetsAsync(configuration.Settings, cancellationToken).ConfigureAwait(true);
         if (configuration.Settings.EnableCaptureOnStartup)
         {
@@ -635,7 +628,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     }
 
     private void RuntimeService_NumLockStateChanged(object? sender, NumLockStateChangedEventArgs e) =>
-        OnUi(() => IsNumLockOn = e.IsOn);
+        OnUi(() => UpdateNumLockState(e.IsOn));
 
     private void RuntimeService_ActionExecutionFailed(object? sender, ActionExecutionFailedEventArgs e) =>
         OnUi(() => ReportRuntimeActionFailure(e));
@@ -715,9 +708,50 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         await runtimeService.SetSelectedKeyboardDeviceAsync(
             settings.SelectedKeyboardDeviceId,
             cancellationToken).ConfigureAwait(true);
+        await runtimeService.SetNumLockBehaviorAsync(
+            settings.NumLockBehavior,
+            cancellationToken).ConfigureAwait(true);
         await runtimeService.SetCaptureTargetsAsync(targets, cancellationToken).ConfigureAwait(true);
+        UpdateNumLockBehavior(settings.NumLockBehavior);
         CaptureNumpad = settings.CaptureNumpad;
         CaptureNavigationBlock = settings.CaptureNavigationBlock;
+    }
+
+    private void UpdateNumLockBehavior(NumLockBehavior behavior)
+    {
+        if (numLockBehavior == behavior)
+        {
+            return;
+        }
+
+        var wasNumLockOn = IsNumLockOn;
+        numLockBehavior = behavior;
+        OnPropertyChanged(nameof(IsNumLockActionKey));
+        OnPropertyChanged(nameof(NumLockSelectorVisibility));
+        OnPropertyChanged(nameof(NumLockActionButtonVisibility));
+        if (wasNumLockOn != IsNumLockOn)
+        {
+            OnPropertyChanged(nameof(IsNumLockOn));
+            OnPropertyChanged(nameof(NumLockBackground));
+            RefreshTiles();
+        }
+    }
+
+    private void UpdateNumLockState(bool value)
+    {
+        if (isNumLockOn == value)
+        {
+            return;
+        }
+
+        var wasNumLockOn = IsNumLockOn;
+        isNumLockOn = value;
+        if (wasNumLockOn != IsNumLockOn)
+        {
+            OnPropertyChanged(nameof(IsNumLockOn));
+            OnPropertyChanged(nameof(NumLockBackground));
+            RefreshTiles();
+        }
     }
 
     private void ApplyObsState(ObsConnectionState state)

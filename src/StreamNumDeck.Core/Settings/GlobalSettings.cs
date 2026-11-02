@@ -7,6 +7,12 @@ public enum AppTheme
     Dark,
 }
 
+public enum NumLockBehavior
+{
+    SwitchLayers,
+    ActionKey,
+}
+
 public sealed record ObsConnectionSettings
 {
     public ObsConnectionSettings(string host, int port, string credentialKey)
@@ -124,6 +130,8 @@ public sealed record GlobalSettings
     public bool CaptureNumpad { get; init; } = true;
 
     public bool CaptureNavigationBlock { get; init; } = true;
+
+    public NumLockBehavior NumLockBehavior { get; init; } = NumLockBehavior.SwitchLayers;
 
     // Empty means the explicit “all keyboards” (global capture) option.
     public string? SelectedKeyboardDeviceId { get; init; } = string.Empty;

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Channels;
 using StreamNumDeck.Core.Deck;
 using StreamNumDeck.Core.Input;
+using StreamNumDeck.Core.Settings;
 
 namespace StreamNumDeck.Infrastructure.Input;
 
@@ -50,6 +51,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
     private uint hookThreadId;
     private volatile bool numLockOn;
     private int captureTargets = (int)KeyboardCaptureTargets.All;
+    private int numLockBehavior = (int)NumLockBehavior.SwitchLayers;
     private long suppressNumLockPollingUntil;
     private bool numLockKeyDown;
     private bool controlDown;
@@ -322,6 +324,21 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         return Task.CompletedTask;
     }
 
+    public Task SetNumLockBehaviorAsync(
+        NumLockBehavior behavior,
+        CancellationToken cancellationToken = default)
+    {
+        Guard.NotDisposed(disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!Enum.IsDefined(typeof(NumLockBehavior), behavior))
+        {
+            throw new ArgumentOutOfRangeException(nameof(behavior), behavior, "Unknown NumLock behavior.");
+        }
+
+        Volatile.Write(ref numLockBehavior, (int)behavior);
+        return Task.CompletedTask;
+    }
+
     public Task SetNumLockAsync(bool isOn, CancellationToken cancellationToken = default)
     {
         Guard.NotDisposed(disposed, this);
@@ -441,14 +458,20 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             }
 
             var isExtended = (input.Flags & LlkhfExtended) != 0;
+            var isNumLockActionKeyEnabled =
+                (NumLockBehavior)Volatile.Read(ref numLockBehavior) is NumLockBehavior.ActionKey;
+            var isNumLockKey = input.VkCode == VkNumLock
+                || input.ScanCode == KeyboardScanCodeTranslator.NumLockScanCode;
             var hasTranslatedKey = KeyboardScanCodeTranslator.TryTranslate(
+                input.VkCode,
                 input.ScanCode,
                 isExtended,
-                out var translatedKey);
+                out var translatedKey)
+                && (!isNumLockKey || isNumLockActionKeyEnabled);
             CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isDown
                 ? new CapturedKeyPress(
                     translatedKey,
-                    numLockOn ? NumLockLayer.On : NumLockLayer.Off,
+                    GetCapturedLayer(),
                     DateTimeOffset.UtcNow,
                     input.VkCode)
                 : null;
@@ -467,8 +490,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
                 return 1;
             }
 
-            if (input.ScanCode == KeyboardScanCodeTranslator.NumLockScanCode
-                && (input.Flags & LlkhfExtended) == 0)
+            if (isNumLockKey && !isNumLockActionKeyEnabled)
             {
                 if (isDown && !numLockKeyDown)
                 {
@@ -611,10 +633,16 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
             deviceId,
             SelectedKeyboardDeviceId,
             StringComparison.OrdinalIgnoreCase);
+        var isNumLockActionKeyEnabled =
+            (NumLockBehavior)Volatile.Read(ref numLockBehavior) is NumLockBehavior.ActionKey;
+        var isNumLockKey = virtualKeyCode == VkNumLock
+            || scanCode == KeyboardScanCodeTranslator.NumLockScanCode;
         var hasTranslatedKey = KeyboardScanCodeTranslator.TryTranslate(
+            virtualKeyCode,
             scanCode,
             isExtended,
-            out var translatedKey);
+            out var translatedKey)
+            && (!isNumLockKey || isNumLockActionKeyEnabled);
         var isRoutedKey = hasTranslatedKey
             && (Volatile.Read(ref deviceSpecificKeys).Contains(translatedKey)
                 || Volatile.Read(ref anyKeyboardKeys).Contains(translatedKey));
@@ -627,7 +655,7 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
         CapturedKeyPress? capturedKeyPress = hasTranslatedKey && isKeyDown
             ? new CapturedKeyPress(
                 translatedKey,
-                numLockOn ? NumLockLayer.On : NumLockLayer.Off,
+                GetCapturedLayer(),
                 DateTimeOffset.UtcNow,
                 virtualKeyCode,
                 deviceId)
@@ -786,6 +814,11 @@ public sealed class WindowsKeyboardCaptureService : IKeyboardCaptureService
 
         SetNumLockState(ReadSystemNumLockState());
     }
+
+    private NumLockLayer GetCapturedLayer() =>
+        (NumLockBehavior)Volatile.Read(ref numLockBehavior) is NumLockBehavior.ActionKey
+            ? NumLockLayer.On
+            : numLockOn ? NumLockLayer.On : NumLockLayer.Off;
 
     private void SetNumLockState(bool value)
     {

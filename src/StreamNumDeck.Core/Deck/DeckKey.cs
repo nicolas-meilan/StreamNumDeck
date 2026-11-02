@@ -2,12 +2,10 @@ using System.Collections.Immutable;
 
 namespace StreamNumDeck.Core.Deck;
 
-/// <summary>
-/// Physical keys available for assignments. NumLock is intentionally excluded
-/// because it selects the active deck layer.
-/// </summary>
+/// <summary>Physical keys available for assignments.</summary>
 public enum DeckKey
 {
+    NumLock,
     Insert,
     Home,
     PageUp,

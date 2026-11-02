@@ -44,8 +44,8 @@ public sealed class JsonConfigurationStoreTests
 
         Assert.IsTrue(File.Exists(paths.ConfigurationFilePath));
         Assert.AreEqual("Основной стрим", configuration.ActiveProfile.Name);
-        Assert.HasCount(22, configuration.ActiveProfile.NumLockOff.Assignments);
-        Assert.HasCount(22, configuration.ActiveProfile.NumLockOn.Assignments);
+        Assert.HasCount(23, configuration.ActiveProfile.NumLockOff.Assignments);
+        Assert.HasCount(23, configuration.ActiveProfile.NumLockOn.Assignments);
         Assert.IsTrue(configuration.Settings.ShowMuteOverlay);
     }
 
@@ -519,8 +519,8 @@ public sealed class JsonConfigurationStoreTests
         Assert.HasCount(2, loaded.Profiles);
         foreach (var profile in loaded.Profiles)
         {
-            Assert.HasCount(22, profile.NumLockOff.Assignments);
-            Assert.HasCount(22, profile.NumLockOn.Assignments);
+            Assert.HasCount(23, profile.NumLockOff.Assignments);
+            Assert.HasCount(23, profile.NumLockOn.Assignments);
         }
 
         Assert.AreEqual(
@@ -533,6 +533,56 @@ public sealed class JsonConfigurationStoreTests
             Assert.IsFalse(profile!["numLockOff"]!["assignments"]!.AsObject().ContainsKey("numpadBack"));
             Assert.IsFalse(profile["numLockOn"]!["assignments"]!.AsObject().ContainsKey("numpadBack"));
         }
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_AddsNumLockAssignmentsAndDefaultsMissingBehavior()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        await store.SaveAsync(AppConfiguration.CreateDefault());
+        var root = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        root["configuration"]!["settings"]!.AsObject().Remove("numLockBehavior");
+        foreach (var profile in root["configuration"]!["profiles"]!.AsArray())
+        {
+            foreach (var layerName in new[] { "numLockOff", "numLockOn" })
+            {
+                profile![layerName]!["assignments"]!.AsObject().Remove("numLock");
+            }
+        }
+
+        File.WriteAllText(paths.ConfigurationFilePath, root.ToJsonString());
+
+        var loaded = await store.LoadAsync();
+
+        Assert.AreEqual(
+            StreamNumDeck.Core.Settings.NumLockBehavior.SwitchLayers,
+            loaded.Settings.NumLockBehavior);
+        foreach (var profile in loaded.Profiles)
+        {
+            Assert.HasCount(23, profile.NumLockOff.Assignments);
+            Assert.HasCount(23, profile.NumLockOn.Assignments);
+            Assert.AreEqual(KeyAssignment.Empty, profile.NumLockOff.GetAssignment(DeckKey.NumLock));
+            Assert.AreEqual(KeyAssignment.Empty, profile.NumLockOn.GetAssignment(DeckKey.NumLock));
+        }
+
+        var migratedRoot = JsonNode.Parse(File.ReadAllText(paths.ConfigurationFilePath))!.AsObject();
+        Assert.IsTrue(migratedRoot["configuration"]!["profiles"]![0]!["numLockOn"]!["assignments"]!
+            .AsObject().ContainsKey("numLock"));
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_PreservesNumLockActionBehavior()
+    {
+        using var store = new JsonConfigurationStore(paths);
+        var settings = GlobalSettings.Default with
+        {
+            NumLockBehavior = NumLockBehavior.ActionKey,
+        };
+        await store.SaveAsync(AppConfiguration.CreateDefault().WithSettings(settings));
+
+        var loaded = await store.LoadAsync();
+
+        Assert.AreEqual(NumLockBehavior.ActionKey, loaded.Settings.NumLockBehavior);
     }
 
     [TestMethod]

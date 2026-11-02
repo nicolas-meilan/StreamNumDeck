@@ -156,6 +156,7 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
         var root = JsonNode.Parse(document.RootElement.GetRawText())?.AsObject()
             ?? throw new InvalidDataException("The configuration document is empty.");
         var requiresPersistence = RemoveObsoleteNumpadBackAssignments(root);
+        requiresPersistence |= AddMissingNumLockAssignments(root);
         requiresPersistence |= MigrateDeviceIdentificationOptions(root);
         requiresPersistence |= MigrateAdditionalButtonKeyboardSettings(root);
         ConfigurationEnvelope? envelope;
@@ -272,6 +273,46 @@ public sealed class JsonConfigurationStore : IConfigurationStore, IDisposable
                         migrated = true;
                     }
                 }
+            }
+        }
+
+        return migrated;
+    }
+
+    private static bool AddMissingNumLockAssignments(JsonObject root)
+    {
+        if (root["configuration"] is not JsonObject configuration
+            || configuration["profiles"] is not JsonArray profiles)
+        {
+            return false;
+        }
+
+        var migrated = false;
+        foreach (var profile in profiles.OfType<JsonObject>())
+        {
+            foreach (var layerName in new[] { "numLockOff", "numLockOn" })
+            {
+                if (profile[layerName] is not JsonObject layer
+                    || layer["assignments"] is not JsonObject assignments
+                    || assignments.ContainsKey("numLock"))
+                {
+                    continue;
+                }
+
+                assignments["numLock"] = new JsonObject
+                {
+                    ["label"] = string.Empty,
+                    ["icon"] = new JsonObject
+                    {
+                        ["kind"] = "builtIn",
+                        ["value"] = "square",
+                    },
+                    ["action"] = new JsonObject
+                    {
+                        ["type"] = "none",
+                    },
+                };
+                migrated = true;
             }
         }
 

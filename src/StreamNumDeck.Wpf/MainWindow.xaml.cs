@@ -232,6 +232,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (key is DeckKey.NumLock && !viewModel.IsNumLockActionKey)
+        {
+            return;
+        }
+
         var editor = new KeyEditorWindow(
             key,
             viewModel.GetCurrentAssignment(key),

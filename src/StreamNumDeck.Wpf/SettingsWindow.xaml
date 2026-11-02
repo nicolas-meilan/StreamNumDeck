@@ -236,12 +236,18 @@
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock Text="{localization:Loc Settings_KeyboardSection.Text, Fallback=Keyboard}"
                                                FontSize="15" FontWeight="SemiBold" />
-                                    <TextBlock Text="{localization:Loc Settings_NumLockHint.Text, Fallback=Physical NumLock switches two assignment layers.}"
+                                    <TextBlock Text="{localization:Loc Settings_NumLockHint.Text, Fallback=Choose whether NumLock switches assignment layers or triggers its own action.}"
                                                FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Grid>
-                            <TextBlock Text="{localization:Loc KeyboardDevice_Select.Label, Fallback=Keyboard source}"
+                                    <TextBlock Text="{localization:Loc Settings_NumLockBehavior.Header, Fallback=NumLock behavior}"
                                        Margin="0,6,0,6" />
+                                    <ComboBox x:Name="NumLockBehaviorComboBox" Height="34" Margin="0,0,0,8">
+                                        <ComboBoxItem Content="{localization:Loc Settings_NumLockBehavior.SwitchLayers, Fallback=Switch assignment layers}" />
+                                        <ComboBoxItem Content="{localization:Loc Settings_NumLockBehavior.ActionKey, Fallback=Assign an action (always use NumLock On layer)}" />
+                                    </ComboBox>
+                                    <TextBlock Text="{localization:Loc KeyboardDevice_Select.Label, Fallback=Keyboard source}"
+                                               Margin="0,6,0,6" />
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
