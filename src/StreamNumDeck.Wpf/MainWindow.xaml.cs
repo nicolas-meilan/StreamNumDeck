@@ -22,6 +22,10 @@ public partial class MainWindow : Window
     {
         this.viewModel = viewModel;
         InitializeComponent();
+        var version = typeof(MainWindow).Assembly.GetName().Version
+            ?? throw new InvalidOperationException("The application assembly version is not available.");
+        Title = $"StreamNumDeck v{version.ToString(3)}";
+        TitleText.Text = Title;
         DataContext = viewModel;
         StateChanged += MainWindow_StateChanged;
         Closing += MainWindow_Closing;

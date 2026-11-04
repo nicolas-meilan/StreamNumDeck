@@ -61,6 +61,41 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="UpdateAvailableButtonStyle" TargetType="Button"
+               BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#B4232F" />
+            <Setter Property="BorderBrush" Value="#EF5350" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#D32F3B" />
+                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FF6B6B" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="#8F1721" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Border Margin="10" Background="#202020" BorderBrush="#4B4B4B" BorderThickness="1" CornerRadius="12">
@@ -111,10 +146,15 @@
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
-                                <TextBlock Text="{localization:Loc Settings_SupportSection.Text, Fallback=Support the author}"
+                                <TextBlock Text="{localization:Loc Settings_ForkSupportSection.Text, Fallback=Support this fork}"
                                            FontSize="14" FontWeight="SemiBold" />
-                                <TextBlock Text="{localization:Loc Settings_SupportHint.Text, Fallback=Support StreamNumDeck development.}"
+                                <TextBlock Text="{localization:Loc Settings_ForkSupportHint.Text, Fallback=Your support helps maintain this independent fork.}"
                                            FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" />
+                                <TextBlock Margin="0,4,0,0" FontSize="11">
+                                    <Hyperlink Click="BaseProject_Click" Foreground="#8EAFF8">
+                                        <Run Text="{localization:Loc Settings_BaseProjectLink.Text, Fallback=View the original project on GitHub}" />
+                                    </Hyperlink>
+                                </TextBlock>
                             </StackPanel>
                             <Button Grid.Column="2" Content="{localization:Loc Settings_SupportButton.Content, Fallback=Donate}"
                                     Click="Support_Click" />
@@ -131,13 +171,23 @@
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
-                                <TextBlock Text="{localization:Loc Settings_UpdatesTitle.Text, Fallback=Stay up to date}"
-                                           FontSize="14" FontWeight="SemiBold" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{localization:Loc Settings_UpdatesTitle.Text, Fallback=Stay up to date}"
+                                               FontSize="14" FontWeight="SemiBold" />
+                                    <Border x:Name="UpdateBadge" Visibility="Collapsed"
+                                            Background="#7F1D1D" BorderBrush="#EF5350" BorderThickness="1"
+                                            CornerRadius="9" Padding="7,2" Margin="8,0,0,0">
+                                        <TextBlock x:Name="UpdateBadgeText" FontSize="10" FontWeight="Bold"
+                                                   Foreground="#FFE4E4" />
+                                    </Border>
+                                </StackPanel>
                                 <TextBlock Text="{localization:Loc Settings_UpdatesHint.Text, Fallback=Follow StreamNumDeck on GitHub for new versions and fixes.}"
                                            FontSize="11" Foreground="{StaticResource SecondaryTextBrush}"
                                            TextWrapping="Wrap" />
+                                <TextBlock x:Name="UpdateStatusText" Visibility="Collapsed"
+                                           FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
                             </StackPanel>
-                            <Button Grid.Column="2"
+                            <Button x:Name="LatestReleaseButton" Grid.Column="2"
                                     Content="{localization:Loc Settings_ReleasesButton.Content, Fallback=Latest release}"
                                     Click="Releases_Click" />
                         </Grid>

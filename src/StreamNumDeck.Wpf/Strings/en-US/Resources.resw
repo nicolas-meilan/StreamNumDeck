@@ -222,11 +222,14 @@
   <data name="Settings_TestObs.Content" xml:space="preserve">
     <value>Test connection</value>
   </data>
-  <data name="Settings_SupportSection.Text" xml:space="preserve">
-    <value>Support development</value>
+  <data name="Settings_ForkSupportSection.Text" xml:space="preserve">
+    <value>Support this fork</value>
   </data>
-  <data name="Settings_SupportHint.Text" xml:space="preserve">
-    <value>If you find StreamNumDeck useful, you can support its development.</value>
+  <data name="Settings_ForkSupportHint.Text" xml:space="preserve">
+    <value>Your support helps maintain this independent fork.</value>
+  </data>
+  <data name="Settings_BaseProjectLink.Text" xml:space="preserve">
+    <value>View the original project on GitHub</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
     <value>Donate</value>
@@ -239,6 +242,21 @@
   </data>
   <data name="Settings_ReleasesButton.Content" xml:space="preserve">
     <value>Latest release</value>
+  </data>
+  <data name="Settings_UpdateChecking.Text" xml:space="preserve">
+    <value>Checking for updates...</value>
+  </data>
+  <data name="Settings_UpdateBadge.Text" xml:space="preserve">
+    <value>NEW v{0}</value>
+  </data>
+  <data name="Settings_UpdateAvailable.Text" xml:space="preserve">
+    <value>A new fork release {0} is available.</value>
+  </data>
+  <data name="Settings_NoUpdate.Text" xml:space="preserve">
+    <value>No newer fork release is available.</value>
+  </data>
+  <data name="Settings_UpdateCheckFailed.Text" xml:space="preserve">
+    <value>Could not check for updates. Try again later.</value>
   </data>
   <data name="Deck_Capture.Text" xml:space="preserve">
     <value>Key capture</value>

@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -16,7 +19,11 @@ public partial class SettingsWindow : Window
 {
     private static readonly Uri SupportUri = new(
         "https://www.paypal.com/donate/?hosted_button_id=83U8QE9H5UFMS");
+    private static readonly Uri BaseProjectUri = new("https://github.com/nikartom/StreamNumDeck");
     private static readonly Uri LatestReleaseUri = new("https://github.com/nicolas-meilan/StreamNumDeck/releases/latest");
+    private static readonly Uri LatestReleaseApiUri = new(
+        "https://api.github.com/repos/nicolas-meilan/StreamNumDeck/releases/latest");
+    private static readonly HttpClient UpdateHttpClient = CreateUpdateHttpClient();
 
     private readonly MainViewModel viewModel;
     private readonly bool focusVTubeStudio;
@@ -31,6 +38,15 @@ public partial class SettingsWindow : Window
         InitializeComponent();
         this.viewModel.RawKeyboardInputObserved += ViewModel_RawKeyboardInputObserved;
         Closed += Window_Closed;
+    }
+
+    private static HttpClient CreateUpdateHttpClient()
+    {
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        var version = typeof(SettingsWindow).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("StreamNumDeck", version));
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        return client;
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -83,6 +99,8 @@ public partial class SettingsWindow : Window
                 VTubeStudioCard.BringIntoView();
                 VTubeStudioHostTextBox.Focus();
             }
+
+            await CheckForUpdatesAsync();
         }
         catch (Exception exception)
         {
@@ -429,12 +447,107 @@ public partial class SettingsWindow : Window
             "Could not open the support page");
     }
 
+    private void BaseProject_Click(object sender, RoutedEventArgs e) =>
+        OpenExternalUri(
+            BaseProjectUri,
+            "Error_OpenBaseProjectLink",
+            "Could not open the base project page");
+
     private void Releases_Click(object sender, RoutedEventArgs e)
     {
         OpenExternalUri(
             LatestReleaseUri,
             "Error_OpenReleasesLink",
             "Could not open the releases page");
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        UpdateStatusText.Text = AppStrings.Get(
+            "Settings_UpdateChecking.Text",
+            "Checking for updates...");
+        UpdateStatusText.Visibility = Visibility.Visible;
+        UpdateStatusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(184, 184, 184));
+
+        try
+        {
+            using var response = await UpdateHttpClient.GetAsync(LatestReleaseApiUri);
+            response.EnsureSuccessStatusCode();
+            using var release = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            if (!release.RootElement.TryGetProperty("tag_name", out var tagNameElement)
+                || tagNameElement.ValueKind != System.Text.Json.JsonValueKind.String)
+            {
+                throw new InvalidDataException("The latest release response did not contain a valid version tag.");
+            }
+
+            var latestVersion = ParseReleaseVersion(tagNameElement.GetString());
+            if (latestVersion is null)
+            {
+                throw new InvalidDataException("The latest release response did not contain a valid version tag.");
+            }
+
+            var currentVersion = typeof(SettingsWindow).Assembly.GetName().Version
+                ?? throw new InvalidDataException("The application assembly version is not available.");
+            if (latestVersion > currentVersion)
+            {
+                var latestVersionText = latestVersion.ToString();
+                UpdateBadgeText.Text = AppStrings.Format("Settings_UpdateBadge.Text", latestVersionText);
+                UpdateBadge.Visibility = Visibility.Visible;
+                UpdateStatusText.Text = AppStrings.Format("Settings_UpdateAvailable.Text", latestVersionText);
+                UpdateStatusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 135, 135));
+                LatestReleaseButton.Style = (Style)FindResource("UpdateAvailableButtonStyle");
+            }
+            else
+            {
+                UpdateStatusText.Text = AppStrings.Get(
+                    "Settings_NoUpdate.Text",
+                    "No newer version is available on the base project.");
+            }
+        }
+        catch (Exception exception) when (
+            exception is HttpRequestException
+                or TaskCanceledException
+                or JsonException
+                or InvalidDataException)
+        {
+            AppLogger.Error("Check for updates", exception);
+            UpdateStatusText.Text = AppStrings.Get(
+                "Settings_UpdateCheckFailed.Text",
+                "Could not check for updates. Try again later.");
+            UpdateStatusText.Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 193, 95));
+        }
+    }
+
+    private static Version? ParseReleaseVersion(string? tagName)
+    {
+        if (tagName is null)
+        {
+            return null;
+        }
+
+        var numericVersion = tagName.Trim();
+        if (numericVersion.Length == 0)
+        {
+            return null;
+        }
+
+        if (numericVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+        {
+            numericVersion = numericVersion.Substring(1);
+        }
+
+        var prereleaseSeparator = numericVersion.IndexOf('-');
+        if (prereleaseSeparator >= 0)
+        {
+            numericVersion = numericVersion.Substring(0, prereleaseSeparator);
+        }
+
+        if (!Version.TryParse(numericVersion, out var version) || version is null)
+        {
+            return null;
+        }
+
+        return version;
     }
 
     private void OpenExternalUri(Uri uri, string errorResourceKey, string errorFallback)

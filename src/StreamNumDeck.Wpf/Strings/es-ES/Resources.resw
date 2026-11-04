@@ -222,11 +222,14 @@
   <data name="Settings_TestObs.Content" xml:space="preserve">
     <value>Conexión de prueba</value>
   </data>
-  <data name="Settings_SupportSection.Text" xml:space="preserve">
-    <value>Apoya al autor</value>
+  <data name="Settings_ForkSupportSection.Text" xml:space="preserve">
+    <value>Apoya este fork</value>
   </data>
-  <data name="Settings_SupportHint.Text" xml:space="preserve">
-    <value>Si encuentra útil StreamNumDeck, puede apoyar su desarrollo.</value>
+  <data name="Settings_ForkSupportHint.Text" xml:space="preserve">
+    <value>Tu aporte ayuda a mantener esta versión independiente.</value>
+  </data>
+  <data name="Settings_BaseProjectLink.Text" xml:space="preserve">
+    <value>Ver el proyecto original en GitHub</value>
   </data>
   <data name="Settings_SupportButton.Content" xml:space="preserve">
     <value>Donar</value>
@@ -239,6 +242,21 @@
   </data>
   <data name="Settings_ReleasesButton.Content" xml:space="preserve">
     <value>Última versión</value>
+  </data>
+  <data name="Settings_UpdateChecking.Text" xml:space="preserve">
+    <value>Buscando actualizaciones...</value>
+  </data>
+  <data name="Settings_UpdateBadge.Text" xml:space="preserve">
+    <value>NUEVA v{0}</value>
+  </data>
+  <data name="Settings_UpdateAvailable.Text" xml:space="preserve">
+    <value>Hay una nueva versión de este fork: {0}.</value>
+  </data>
+  <data name="Settings_NoUpdate.Text" xml:space="preserve">
+    <value>No hay una versión más reciente de este fork.</value>
+  </data>
+  <data name="Settings_UpdateCheckFailed.Text" xml:space="preserve">
+    <value>No se pudieron comprobar las actualizaciones. Inténtalo más tarde.</value>
   </data>
   <data name="Deck_Capture.Text" xml:space="preserve">
     <value>Capturar</value>

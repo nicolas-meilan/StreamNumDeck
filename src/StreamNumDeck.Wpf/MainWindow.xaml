@@ -105,7 +105,7 @@
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
                 <Image Source="Assets/AppIcon.ico" Width="16" Height="16" />
-                <TextBlock Text="StreamNumDeck" Margin="9,0,0,0" Foreground="#C9C9C9" FontSize="12" />
+                <TextBlock x:Name="TitleText" Text="StreamNumDeck" Margin="9,0,0,0" Foreground="#C9C9C9" FontSize="12" />
             </StackPanel>
             <Button Grid.Column="1" Style="{StaticResource ChromeButtonStyle}" Click="Minimize_Click" ToolTip="{localization:Loc Common_Minimize, Fallback=Minimize}">
                 <TextBlock FontFamily="Segoe Fluent Icons" Text="&#xE921;" FontSize="10" />

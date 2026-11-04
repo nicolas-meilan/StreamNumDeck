@@ -151,7 +151,7 @@ dotnet publish .\src\StreamNumDeck.Wpf\StreamNumDeck.Wpf.csproj --configuration 
 To package the portable ZIP and installer executable instead, run the packaging script (Inno Setup 6 is required for Setup):
 
 ```powershell
-.\scripts\package-wpf.ps1 -Version 2.1.0
+.\scripts\package-wpf.ps1 -Version 2.2.0
 ```
 
 The ZIP and `Setup.exe` are written to `artifacts\release`.
@@ -264,7 +264,7 @@ dotnet publish .\src\StreamNumDeck.Wpf\StreamNumDeck.Wpf.csproj --configuration 
 Для создания portable ZIP и установщика Setup.exe запустите скрипт упаковки (для Setup потребуется Inno Setup 6):
 
 ```powershell
-.\scripts\package-wpf.ps1 -Version 2.1.0
+.\scripts\package-wpf.ps1 -Version 2.2.0
 ```
 
 ZIP и `Setup.exe` будут созданы в `artifacts\release`.
