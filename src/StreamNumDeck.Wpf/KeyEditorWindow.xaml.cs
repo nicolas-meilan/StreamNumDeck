@@ -162,7 +162,9 @@ public partial class KeyEditorWindow : Window
         iconPickerInitialized = true;
         AutomationStepsItemsControl.ItemsSource = automationSteps;
         ActionGroupListBox.ItemsSource = actionOnlyMode
-            ? ActionGroups.Where(group => group.Id is "sound" or "obs" or "vtube-studio" or "system").ToArray()
+            ? ActionGroups.Where(group =>
+                group.Id is "sound" or "obs" or "vtube-studio" or "system"
+                || additionalButtonMode && group.Id == "automation").ToArray()
             : ActionGroups;
         SoundBehaviorComboBox.ItemsSource = new[]
         {
